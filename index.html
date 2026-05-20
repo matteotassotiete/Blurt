@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Blurt</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#8b5a3c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Blurt">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icon.svg">
 <style>
   :root {
     --bg: #faf7f2;
@@ -205,7 +211,8 @@
   .notes-area {
     flex: 1;
     overflow-y: auto;
-    padding: 20px 40px 120px;
+    padding: 20px 40px 100px;
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
   }
 
   .empty-state {
@@ -262,74 +269,122 @@
     color: var(--text);
   }
 
-  /* ============ MIC BUTTON ============ */
-  .mic-container {
-    position: absolute;
-    bottom: 32px;
-    right: 32px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .mic-hint {
+  .note-route {
     font-size: 11px;
-    color: var(--text-faint);
-    background: var(--bg-card);
-    padding: 4px 10px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    white-space: nowrap;
-    opacity: 0;
-    transition: opacity 0.2s;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 6px;
   }
 
-  .mic-container:hover .mic-hint { opacity: 1; }
+  .note-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
 
-  .mic-btn {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    background: var(--accent);
+  .note:hover .note-actions { opacity: 1; }
+
+  .note-move {
+    background: none;
     border: none;
+    color: var(--text-faint);
+    cursor: pointer;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: var(--sans);
+  }
+
+  .note-move:hover { background: rgba(139, 90, 60, 0.1); color: var(--accent); }
+
+  .misc-item {
+    padding: 8px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-muted);
+    border-left: 3px solid transparent;
+    user-select: none;
+  }
+
+  .misc-item:hover { background: rgba(0,0,0,0.03); color: var(--text); }
+
+  .misc-item.selected {
+    background: rgba(139, 90, 60, 0.08);
+    border-left-color: var(--accent);
+    color: var(--text);
+  }
+
+  .misc-count {
+    margin-left: auto;
+    font-size: 10px;
+    background: var(--border);
+    padding: 1px 6px;
+    border-radius: 8px;
+    color: var(--text-muted);
+  }
+
+  /* ============ MIC BAR (bottom, thumb zone) ============ */
+  .mic-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    z-index: 40;
+    pointer-events: none;
+  }
+
+  .mic-bar-btn {
+    pointer-events: auto;
+    width: 100%;
+    height: 56px;
+    border: none;
+    border-radius: 14px;
+    background: var(--accent);
+    color: white;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 26px;
-    transition: transform 0.1s, background 0.15s, box-shadow 0.15s;
-    box-shadow: 0 2px 8px rgba(139, 90, 60, 0.25);
+    gap: 10px;
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    box-shadow: 0 -2px 16px rgba(139, 90, 60, 0.2);
     user-select: none;
     -webkit-user-select: none;
+    touch-action: none;
+    transition: background 0.15s, transform 0.1s;
   }
 
-  .mic-btn:hover { background: #75492f; }
-  .mic-btn:active { transform: scale(0.95); }
+  .mic-bar-btn:active { transform: scale(0.98); }
 
-  .mic-btn.recording {
+  .mic-bar-btn.recording {
     background: var(--mic-red);
-    animation: pulse 1.2s ease-in-out infinite;
+    animation: mic-pulse 1.2s ease-in-out infinite;
   }
 
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 2px 8px rgba(197, 74, 58, 0.3), 0 0 0 0 rgba(197, 74, 58, 0.4); }
-    50% { box-shadow: 0 2px 8px rgba(197, 74, 58, 0.3), 0 0 0 14px rgba(197, 74, 58, 0); }
+  @keyframes mic-pulse {
+    0%, 100% { box-shadow: 0 -2px 16px rgba(197, 74, 58, 0.25); }
+    50% { box-shadow: 0 -2px 24px rgba(197, 74, 58, 0.45); }
   }
+
+  .mic-bar-icon { font-size: 22px; }
 
   .recording-indicator {
     position: absolute;
-    bottom: 110px;
-    right: 32px;
+    left: 16px;
+    right: 16px;
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 12px 16px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.08);
     display: none;
-    min-width: 200px;
-    max-width: 320px;
+    z-index: 41;
   }
 
   .recording-indicator.active { display: block; }
@@ -365,6 +420,44 @@
     color: var(--text);
     min-height: 20px;
     font-style: italic;
+  }
+
+  .route-toast {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    background: var(--text);
+    color: var(--bg);
+    font-size: 13px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+    z-index: 60;
+    max-width: calc(100% - 32px);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .route-toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .modal select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: var(--sans);
+    margin-bottom: 16px;
+    background: var(--bg);
   }
 
   /* ============ MODAL ============ */
@@ -442,11 +535,71 @@
     margin: 12px 40px 0;
     display: none;
   }
+
+  /* ============ MOBILE ============ */
+  .menu-btn {
+    display: none;
+    position: absolute;
+    top: 20px;
+    left: 16px;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-card);
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--text);
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+  }
+
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 90;
+  }
+
+  .sidebar-overlay.active { display: block; }
+
+  @media (max-width: 599px) {
+    .menu-btn { display: flex; }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 100;
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .sidebar.open { transform: translateX(0); }
+
+    .main-header {
+      padding: 20px 20px 16px 64px;
+    }
+
+    .notes-area { padding: 16px 20px 100px; padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+
+    .browser-warning { margin: 12px 20px 0; }
+
+    .mic-bar { padding: 0 12px calc(10px + env(safe-area-inset-bottom, 0px)); }
+
+    .mic-bar-btn { height: 60px; font-size: 16px; }
+  }
 </style>
 </head>
 <body>
 
-<aside class="sidebar">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<aside class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <div class="app-title">Blurt</div>
     <div class="app-subtitle">say it, save it</div>
@@ -462,19 +615,21 @@
   </div>
 
   <div class="category">
-    <div class="category-header disabled">
+    <div class="category-header" id="misc-header">
       <span class="chevron">▼</span>
       <span>Miscellaneous</span>
-      <span style="margin-left: auto; font-size: 9px;">soon</span>
+      <span class="misc-count" id="misc-count">0</span>
     </div>
+    <div class="misc-item" id="misc-item">Unsorted notes</div>
   </div>
 </aside>
 
 <main class="main">
+  <button class="menu-btn" id="menu-btn" aria-label="Open menu">☰</button>
   <div class="main-header">
     <div class="breadcrumb" id="breadcrumb">Welcome</div>
-    <div class="current-title" id="current-title">Pick a book to start</div>
-    <div class="current-meta" id="current-meta">Or add one from the sidebar</div>
+    <div class="current-title" id="current-title">Ready</div>
+    <div class="current-meta" id="current-meta">Hold the bar below and speak — we'll file it for you</div>
   </div>
 
   <div class="browser-warning" id="browser-warning">
@@ -484,9 +639,11 @@
   <div class="notes-area" id="notes-area">
     <div class="empty-state">
       <div class="icon">📖</div>
-      <p>Add a book from the sidebar, then hold the mic to start annotating.</p>
+      <p>Hold the bar at the bottom and speak. Say a book or chapter name and we'll sort it automatically.</p>
     </div>
   </div>
+
+  <div class="route-toast" id="route-toast"></div>
 
   <div class="recording-indicator" id="recording-indicator">
     <div class="recording-label">
@@ -496,9 +653,11 @@
     <div class="recording-transcript" id="recording-transcript">…</div>
   </div>
 
-  <div class="mic-container">
-    <div class="mic-hint">Hold to record</div>
-    <button class="mic-btn" id="mic-btn" aria-label="Hold to record">🎙</button>
+  <div class="mic-bar">
+    <button class="mic-bar-btn" id="mic-btn" aria-label="Hold to talk">
+      <span class="mic-bar-icon">🎙</span>
+      <span id="mic-bar-label">Hold to talk</span>
+    </button>
   </div>
 </main>
 
@@ -506,6 +665,7 @@
   <div class="modal">
     <h3 id="modal-title">Add book</h3>
     <input type="text" id="modal-input" placeholder="Title…" autocomplete="off">
+    <select id="modal-dest" style="display:none"></select>
     <div class="modal-actions">
       <button id="modal-cancel">Cancel</button>
       <button class="primary" id="modal-save">Save</button>
@@ -523,6 +683,7 @@
   };
 
   const STORAGE_KEY = 'blurt-v1';
+  const MISC_ID = '__misc__';
 
   function load() {
     try {
@@ -539,6 +700,76 @@
   }
 
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  // ============ AUTO-ROUTE ============
+  function phraseScore(phrase, haystack) {
+    if (!phrase || phrase.length < 2) return 0;
+    if (haystack.includes(phrase)) return phrase.length * 2;
+    const words = phrase.split(/\s+/).filter(w => w.length > 2);
+    let score = 0;
+    for (const w of words) {
+      if (haystack.includes(w)) score += w.length;
+    }
+    return score;
+  }
+
+  function routeNote(text) {
+    const lower = text.toLowerCase();
+    let best = { bookId: MISC_ID, chapterId: null, score: 0 };
+
+    for (const book of state.books) {
+      const bookScore = phraseScore(book.title.toLowerCase(), lower);
+      let bestChapter = null;
+      let bestChapScore = 0;
+
+      for (const chap of book.chapters) {
+        const chapScore = phraseScore(chap.title.toLowerCase(), lower);
+        if (chapScore > bestChapScore) {
+          bestChapScore = chapScore;
+          bestChapter = chap;
+        }
+      }
+
+      const combined = bookScore + bestChapScore * 1.5;
+      if (combined > best.score) {
+        best = {
+          bookId: book.id,
+          chapterId: bestChapter && bestChapScore > 0 ? bestChapter.id : null,
+          score: combined,
+        };
+      } else if (bookScore > best.score) {
+        best = { bookId: book.id, chapterId: null, score: bookScore };
+      }
+    }
+
+    if (best.score < 3) return { bookId: MISC_ID, chapterId: null };
+    return best;
+  }
+
+  function isMiscNote(note) {
+    return note.bookId === MISC_ID || note.bookId == null ||
+      !state.books.some(b => b.id === note.bookId);
+  }
+
+  function getNoteLocation(note) {
+    if (isMiscNote(note)) return 'Miscellaneous';
+    const book = state.books.find(b => b.id === note.bookId);
+    if (!book) return 'Miscellaneous';
+    if (note.chapterId) {
+      const ch = book.chapters.find(c => c.id === note.chapterId);
+      return ch ? `${book.title} · ${ch.title}` : book.title;
+    }
+    return book.title;
+  }
+
+  let toastTimer = null;
+  function showRouteToast(message) {
+    const toast = document.getElementById('route-toast');
+    toast.textContent = message;
+    toast.classList.add('visible');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('visible'), 2800);
+  }
 
   // ============ RENDER ============
   function renderSidebar() {
@@ -592,6 +823,38 @@
         list.appendChild(chapterList);
       }
     });
+
+    const miscCount = state.notes.filter(isMiscNote).length;
+    document.getElementById('misc-count').textContent = miscCount;
+    document.getElementById('misc-item').className =
+      'misc-item' + (state.selectedBookId === MISC_ID ? ' selected' : '');
+  }
+
+  function renderNoteCard(note, showRoute) {
+    const el = document.createElement('div');
+    el.className = 'note';
+    const date = new Date(note.createdAt);
+    const timeStr = date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    el.innerHTML = `
+      <div class="note-header">
+        <span class="note-time">${timeStr}</span>
+        <div class="note-actions">
+          <button class="note-move" type="button">Move</button>
+          <button class="note-delete" aria-label="Delete" type="button">×</button>
+        </div>
+      </div>
+      ${showRoute ? `<div class="note-route">${escapeHtml(getNoteLocation(note))}</div>` : ''}
+      <div class="note-body">${escapeHtml(note.text)}</div>
+    `;
+    el.querySelector('.note-delete').addEventListener('click', () => {
+      if (confirm('Delete this annotation?')) {
+        state.notes = state.notes.filter(n => n.id !== note.id);
+        save();
+        renderMain();
+      }
+    });
+    el.querySelector('.note-move').addEventListener('click', () => openMoveModal(note));
+    return el;
   }
 
   function renderMain() {
@@ -600,13 +863,33 @@
     const meta = document.getElementById('current-meta');
     const notesArea = document.getElementById('notes-area');
 
+    if (state.selectedBookId === MISC_ID) {
+      breadcrumb.textContent = 'Inbox';
+      title.textContent = 'Miscellaneous';
+      meta.textContent = 'Couldn\'t match a book — move these when you\'re ready';
+      const miscNotes = state.notes.filter(isMiscNote).sort((a, b) => b.createdAt - a.createdAt);
+      if (miscNotes.length === 0) {
+        notesArea.innerHTML = `<div class="empty-state"><div class="icon">📥</div><p>No unsorted notes. When we can't match what you say to a book, it lands here.</p></div>`;
+        return;
+      }
+      notesArea.innerHTML = '';
+      miscNotes.forEach(note => notesArea.appendChild(renderNoteCard(note, false)));
+      return;
+    }
+
     const book = state.books.find(b => b.id === state.selectedBookId);
 
     if (!book) {
-      breadcrumb.textContent = 'Welcome';
-      title.textContent = 'Pick a book to start';
-      meta.textContent = 'Or add one from the sidebar';
-      notesArea.innerHTML = `<div class="empty-state"><div class="icon">📖</div><p>Add a book from the sidebar, then hold the mic to start annotating.</p></div>`;
+      breadcrumb.textContent = 'Blurt';
+      title.textContent = 'Ready';
+      meta.textContent = 'Hold the bar below and speak — mention a book or chapter to auto-file';
+      const recent = [...state.notes].sort((a, b) => b.createdAt - a.createdAt).slice(0, 40);
+      if (recent.length === 0) {
+        notesArea.innerHTML = `<div class="empty-state"><div class="icon">📖</div><p>Hold the bar at the bottom and speak. Say a book or chapter name and we'll sort it automatically.</p></div>`;
+        return;
+      }
+      notesArea.innerHTML = '';
+      recent.forEach(note => notesArea.appendChild(renderNoteCard(note, true)));
       return;
     }
 
@@ -628,35 +911,36 @@
     }).sort((a, b) => b.createdAt - a.createdAt);
 
     if (relevantNotes.length === 0) {
-      notesArea.innerHTML = `<div class="empty-state"><div class="icon">🎙</div><p>Hold the mic to capture your first annotation here.</p></div>`;
+      notesArea.innerHTML = `<div class="empty-state"><div class="icon">🎙</div><p>Hold the bar below and speak — mention this book or chapter to file here.</p></div>`;
       return;
     }
 
     notesArea.innerHTML = '';
-    relevantNotes.forEach(note => {
-      const el = document.createElement('div');
-      el.className = 'note';
-      const date = new Date(note.createdAt);
-      const timeStr = date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-      el.innerHTML = `
-        <div class="note-header">
-          <span class="note-time">${timeStr}</span>
-          <button class="note-delete" aria-label="Delete">×</button>
-        </div>
-        <div class="note-body">${escapeHtml(note.text)}</div>
-      `;
-      el.querySelector('.note-delete').addEventListener('click', () => {
-        if (confirm('Delete this annotation?')) {
-          state.notes = state.notes.filter(n => n.id !== note.id);
-          save();
-          renderMain();
-        }
-      });
-      notesArea.appendChild(el);
-    });
+    relevantNotes.forEach(note => notesArea.appendChild(renderNoteCard(note, false)));
   }
 
-  function renderAll() { renderSidebar(); renderMain(); }
+  // ============ MOBILE SIDEBAR ============
+  const sidebar = document.getElementById('sidebar');
+  const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+  function openSidebar() {
+    sidebar.classList.add('open');
+    sidebarOverlay.classList.add('active');
+  }
+
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    sidebarOverlay.classList.remove('active');
+  }
+
+  document.getElementById('menu-btn').addEventListener('click', openSidebar);
+  sidebarOverlay.addEventListener('click', closeSidebar);
+
+  function renderAll() {
+    renderSidebar();
+    renderMain();
+    if (window.matchMedia('(max-width: 599px)').matches) closeSidebar();
+  }
 
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -664,16 +948,55 @@
 
   // ============ MODAL ============
   let modalCallback = null;
+
+  function buildDestinations() {
+    const dests = [{ bookId: MISC_ID, chapterId: null, label: 'Miscellaneous' }];
+    state.books.forEach(b => {
+      dests.push({ bookId: b.id, chapterId: null, label: b.title });
+      b.chapters.forEach(c => {
+        dests.push({ bookId: b.id, chapterId: c.id, label: `${b.title} → ${c.title}` });
+      });
+    });
+    return dests;
+  }
+
   function openModal(title, initial, callback) {
     document.getElementById('modal-title').textContent = title;
     const input = document.getElementById('modal-input');
+    const dest = document.getElementById('modal-dest');
+    input.style.display = '';
+    dest.style.display = 'none';
     input.value = initial || '';
     modalCallback = callback;
     document.getElementById('modal-backdrop').classList.add('active');
     setTimeout(() => input.focus(), 50);
   }
+
+  function openMoveModal(note) {
+    document.getElementById('modal-title').textContent = 'Move annotation';
+    const input = document.getElementById('modal-input');
+    const dest = document.getElementById('modal-dest');
+    input.style.display = 'none';
+    dest.style.display = 'block';
+    const destinations = buildDestinations();
+    dest.innerHTML = destinations.map((d, i) =>
+      `<option value="${i}">${escapeHtml(d.label)}</option>`
+    ).join('');
+    modalCallback = () => {
+      const picked = destinations[parseInt(dest.value, 10)];
+      note.bookId = picked.bookId;
+      note.chapterId = picked.chapterId;
+      save();
+      renderAll();
+      showRouteToast(`Moved to ${picked.label}`);
+    };
+    document.getElementById('modal-backdrop').classList.add('active');
+  }
+
   function closeModal() {
     document.getElementById('modal-backdrop').classList.remove('active');
+    document.getElementById('modal-input').style.display = '';
+    document.getElementById('modal-dest').style.display = 'none';
     modalCallback = null;
   }
   document.getElementById('modal-cancel').addEventListener('click', closeModal);
@@ -703,6 +1026,19 @@
     document.getElementById('add-book-btn').style.display = this.classList.contains('collapsed') ? 'none' : '';
   });
 
+  document.getElementById('misc-item').addEventListener('click', () => {
+    state.selectedBookId = MISC_ID;
+    state.selectedChapterId = null;
+    save();
+    renderAll();
+  });
+
+  document.getElementById('misc-header').addEventListener('click', function() {
+    this.classList.toggle('collapsed');
+    const item = document.getElementById('misc-item');
+    item.style.display = this.classList.contains('collapsed') ? 'none' : '';
+  });
+
   // ============ SPEECH RECOGNITION ============
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition = null;
@@ -730,30 +1066,40 @@
     };
 
     recognition.onerror = (e) => {
-      console.error('speech error:', e.error);
+      console.warn('speech error:', e.error);
+      if (!isRecording) return;
+
       if (e.error === 'not-allowed') {
         alert('Microphone permission denied. Please allow it in your browser settings.');
+        stopRecording();
+        return;
       }
-      stopRecording();
+      if (e.error === 'audio-capture' || e.error === 'service-not-available') {
+        alert('Could not access the microphone. Check your device and browser settings.');
+        stopRecording();
+        return;
+      }
+
+      // Benign / recoverable — recognizer often stops after silence; onend will restart
+      if (e.error === 'no-speech' || e.error === 'aborted' || e.error === 'network') return;
     };
 
     recognition.onend = () => {
-      if (isRecording) {
-        // recognizer auto-stopped but user still holding — restart
-        try { recognition.start(); } catch (e) {}
-      }
+      if (!isRecording) return;
+      // Brief delay avoids InvalidStateError when restarting immediately
+      setTimeout(() => {
+        if (!isRecording) return;
+        try { recognition.start(); } catch (e) { console.warn('speech restart:', e); }
+      }, 150);
     };
   }
 
   const micBtn = document.getElementById('mic-btn');
+  const micBarLabel = document.getElementById('mic-bar-label');
 
   function startRecording() {
     if (!recognition) {
       alert('Speech recognition not supported in this browser. Use Chrome, Edge, or Safari.');
-      return;
-    }
-    if (!state.selectedBookId) {
-      alert('Pick a book first — annotations need somewhere to live.');
       return;
     }
     isRecording = true;
@@ -761,6 +1107,7 @@
     document.getElementById('recording-transcript').textContent = '…';
     document.getElementById('recording-indicator').classList.add('active');
     micBtn.classList.add('recording');
+    micBarLabel.textContent = 'Listening…';
     try { recognition.start(); } catch (e) { console.error(e); }
   }
 
@@ -768,31 +1115,43 @@
     if (!isRecording) return;
     isRecording = false;
     micBtn.classList.remove('recording');
+    micBarLabel.textContent = 'Hold to talk';
     document.getElementById('recording-indicator').classList.remove('active');
     try { recognition.stop(); } catch (e) {}
 
     const text = currentTranscript.trim();
     if (text) {
-      state.notes.push({
+      const route = routeNote(text);
+      const note = {
         id: uid(),
-        bookId: state.selectedBookId,
-        chapterId: state.selectedChapterId,
+        bookId: route.bookId,
+        chapterId: route.chapterId,
         text: text,
         createdAt: Date.now(),
-      });
+      };
+      state.notes.push(note);
       save();
-      renderMain();
+      showRouteToast('Saved to ' + getNoteLocation(note));
+      renderAll();
     }
     currentTranscript = '';
   }
 
-  // Hold-to-record on both mouse and touch
-  micBtn.addEventListener('mousedown', (e) => { e.preventDefault(); startRecording(); });
-  micBtn.addEventListener('mouseup', (e) => { e.preventDefault(); stopRecording(); });
-  micBtn.addEventListener('mouseleave', () => { if (isRecording) stopRecording(); });
+  // Hold-to-record — pointer capture keeps recording if the cursor drifts off the button
+  micBtn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    micBtn.setPointerCapture(e.pointerId);
+    startRecording();
+  });
+  micBtn.addEventListener('pointerup', (e) => {
+    e.preventDefault();
+    if (micBtn.hasPointerCapture(e.pointerId)) micBtn.releasePointerCapture(e.pointerId);
+    stopRecording();
+  });
+  micBtn.addEventListener('pointercancel', () => { if (isRecording) stopRecording(); });
 
-  micBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); }, { passive: false });
-  micBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopRecording(); }, { passive: false });
+  // Drag off the mic without releasing → stop (PLAN 1.2)
+  micBtn.addEventListener('mouseleave', () => { if (isRecording) stopRecording(); });
 
   // ============ INIT ============
   load();
