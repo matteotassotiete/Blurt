@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blurt</title>
+<style>
+  :root {
+    --bg: #faf7f2;
+    --bg-sidebar: #f3ede3;
+    --bg-card: #ffffff;
+    --text: #2a2724;
+    --text-muted: #7a7268;
+    --text-faint: #a89e92;
+    --border: #e5ddd0;
+    --accent: #8b5a3c;
+    --accent-light: #d4a574;
+    --mic-red: #c54a3a;
+    --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+  }
+
+  /* ============ SIDEBAR ============ */
+  .sidebar {
+    width: 280px;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .sidebar-header {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .app-title {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .app-subtitle {
+    font-size: 12px;
+    color: var(--text-faint);
+    margin-top: 2px;
+    font-style: italic;
+  }
+
+  .category {
+    padding: 4px 0;
+  }
+
+  .category-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    user-select: none;
+  }
+
+  .category-header:hover { color: var(--text); }
+
+  .category-header .chevron {
+    margin-right: 6px;
+    transition: transform 0.15s;
+    font-size: 10px;
+  }
+
+  .category-header.collapsed .chevron { transform: rotate(-90deg); }
+
+  .category-header.disabled {
+    color: var(--text-faint);
+    cursor: default;
+    font-style: italic;
+  }
+
+  .book-list { padding: 0 0 8px; }
+
+  .book-item {
+    padding: 8px 20px 8px 36px;
+    cursor: pointer;
+    font-family: var(--serif);
+    font-size: 15px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    border-left: 3px solid transparent;
+    user-select: none;
+  }
+
+  .book-item:hover { background: rgba(0,0,0,0.03); }
+
+  .book-item.selected {
+    background: rgba(139, 90, 60, 0.08);
+    border-left-color: var(--accent);
+  }
+
+  .book-item .chevron {
+    margin-right: 6px;
+    font-size: 9px;
+    color: var(--text-faint);
+    transition: transform 0.15s;
+  }
+
+  .book-item.expanded .chevron { transform: rotate(90deg); }
+
+  .chapter-list { padding: 0; }
+
+  .chapter-item {
+    padding: 6px 20px 6px 56px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-left: 3px solid transparent;
+    user-select: none;
+  }
+
+  .chapter-item:hover { background: rgba(0,0,0,0.03); color: var(--text); }
+
+  .chapter-item.selected {
+    background: rgba(139, 90, 60, 0.08);
+    border-left-color: var(--accent-light);
+    color: var(--text);
+  }
+
+  .add-btn {
+    margin: 4px 20px 8px 36px;
+    padding: 6px 10px;
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    color: var(--text-faint);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: var(--sans);
+    width: calc(100% - 56px);
+    text-align: left;
+  }
+
+  .add-btn:hover { color: var(--text); border-color: var(--text-faint); }
+
+  .add-chapter-btn {
+    margin: 2px 20px 6px 56px;
+    width: calc(100% - 76px);
+    font-size: 11px;
+  }
+
+  /* ============ MAIN CONTENT ============ */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .main-header {
+    padding: 24px 40px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .breadcrumb {
+    font-size: 12px;
+    color: var(--text-faint);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .current-title {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+
+  .current-meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-style: italic;
+  }
+
+  .notes-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 40px 120px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--text-faint);
+  }
+
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-state p { font-size: 14px; font-style: italic; }
+
+  .note {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+
+  .note-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .note-time {
+    font-size: 11px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .note-delete {
+    background: none;
+    border: none;
+    color: var(--text-faint);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .note:hover .note-delete { opacity: 1; }
+  .note-delete:hover { background: rgba(197, 74, 58, 0.1); color: var(--mic-red); }
+
+  .note-body {
+    font-family: var(--serif);
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  /* ============ MIC BUTTON ============ */
+  .mic-container {
+    position: absolute;
+    bottom: 32px;
+    right: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mic-hint {
+    font-size: 11px;
+    color: var(--text-faint);
+    background: var(--bg-card);
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .mic-container:hover .mic-hint { opacity: 1; }
+
+  .mic-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 26px;
+    transition: transform 0.1s, background 0.15s, box-shadow 0.15s;
+    box-shadow: 0 2px 8px rgba(139, 90, 60, 0.25);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .mic-btn:hover { background: #75492f; }
+  .mic-btn:active { transform: scale(0.95); }
+
+  .mic-btn.recording {
+    background: var(--mic-red);
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 2px 8px rgba(197, 74, 58, 0.3), 0 0 0 0 rgba(197, 74, 58, 0.4); }
+    50% { box-shadow: 0 2px 8px rgba(197, 74, 58, 0.3), 0 0 0 14px rgba(197, 74, 58, 0); }
+  }
+
+  .recording-indicator {
+    position: absolute;
+    bottom: 110px;
+    right: 32px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    display: none;
+    min-width: 200px;
+    max-width: 320px;
+  }
+
+  .recording-indicator.active { display: block; }
+
+  .recording-label {
+    font-size: 11px;
+    color: var(--mic-red);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .recording-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--mic-red);
+    animation: blink 1s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .recording-transcript {
+    font-family: var(--serif);
+    font-size: 14px;
+    color: var(--text);
+    min-height: 20px;
+    font-style: italic;
+  }
+
+  /* ============ MODAL ============ */
+  .modal-backdrop {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-backdrop.active { display: flex; }
+
+  .modal {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 24px;
+    width: 360px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  }
+
+  .modal h3 {
+    font-family: var(--serif);
+    font-size: 20px;
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+
+  .modal input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: var(--sans);
+    margin-bottom: 16px;
+    background: var(--bg);
+  }
+
+  .modal input:focus { outline: none; border-color: var(--accent); }
+
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .modal-actions button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  .modal-actions button.primary {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  .modal-actions button.primary:hover { background: #75492f; }
+
+  .browser-warning {
+    background: #fff8e1;
+    border: 1px solid #f5c97a;
+    color: #7a5a18;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    margin: 12px 40px 0;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="app-title">Blurt</div>
+    <div class="app-subtitle">say it, save it</div>
+  </div>
+
+  <div class="category">
+    <div class="category-header" id="books-header">
+      <span class="chevron">▼</span>
+      <span>Books</span>
+    </div>
+    <div class="book-list" id="book-list"></div>
+    <button class="add-btn" id="add-book-btn">+ Add book</button>
+  </div>
+
+  <div class="category">
+    <div class="category-header disabled">
+      <span class="chevron">▼</span>
+      <span>Miscellaneous</span>
+      <span style="margin-left: auto; font-size: 9px;">soon</span>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="main-header">
+    <div class="breadcrumb" id="breadcrumb">Welcome</div>
+    <div class="current-title" id="current-title">Pick a book to start</div>
+    <div class="current-meta" id="current-meta">Or add one from the sidebar</div>
+  </div>
+
+  <div class="browser-warning" id="browser-warning">
+    Your browser doesn't support speech recognition. Try Chrome, Edge, or Safari.
+  </div>
+
+  <div class="notes-area" id="notes-area">
+    <div class="empty-state">
+      <div class="icon">📖</div>
+      <p>Add a book from the sidebar, then hold the mic to start annotating.</p>
+    </div>
+  </div>
+
+  <div class="recording-indicator" id="recording-indicator">
+    <div class="recording-label">
+      <span class="recording-dot"></span>
+      Listening
+    </div>
+    <div class="recording-transcript" id="recording-transcript">…</div>
+  </div>
+
+  <div class="mic-container">
+    <div class="mic-hint">Hold to record</div>
+    <button class="mic-btn" id="mic-btn" aria-label="Hold to record">🎙</button>
+  </div>
+</main>
+
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <h3 id="modal-title">Add book</h3>
+    <input type="text" id="modal-input" placeholder="Title…" autocomplete="off">
+    <div class="modal-actions">
+      <button id="modal-cancel">Cancel</button>
+      <button class="primary" id="modal-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============ STATE ============
+  let state = {
+    books: [],           // [{ id, title, chapters: [{ id, title }], expanded: false }]
+    notes: [],           // [{ id, bookId, chapterId|null, text, createdAt }]
+    selectedBookId: null,
+    selectedChapterId: null,
+  };
+
+  const STORAGE_KEY = 'blurt-v1';
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        state = { ...state, ...parsed };
+      }
+    } catch (e) { console.error('load failed', e); }
+  }
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  // ============ RENDER ============
+  function renderSidebar() {
+    const list = document.getElementById('book-list');
+    list.innerHTML = '';
+
+    state.books.forEach(book => {
+      const item = document.createElement('div');
+      item.className = 'book-item' + (state.selectedBookId === book.id && !state.selectedChapterId ? ' selected' : '') + (book.expanded ? ' expanded' : '');
+      item.innerHTML = `<span class="chevron">▶</span><span>${escapeHtml(book.title)}</span>`;
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        book.expanded = !book.expanded;
+        state.selectedBookId = book.id;
+        state.selectedChapterId = null;
+        save();
+        renderAll();
+      });
+      list.appendChild(item);
+
+      if (book.expanded) {
+        const chapterList = document.createElement('div');
+        chapterList.className = 'chapter-list';
+        book.chapters.forEach(chap => {
+          const ch = document.createElement('div');
+          ch.className = 'chapter-item' + (state.selectedChapterId === chap.id ? ' selected' : '');
+          ch.textContent = chap.title;
+          ch.addEventListener('click', (e) => {
+            e.stopPropagation();
+            state.selectedBookId = book.id;
+            state.selectedChapterId = chap.id;
+            save();
+            renderAll();
+          });
+          chapterList.appendChild(ch);
+        });
+        const addCh = document.createElement('button');
+        addCh.className = 'add-btn add-chapter-btn';
+        addCh.textContent = '+ Add chapter';
+        addCh.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openModal('Add chapter', '', (val) => {
+            if (val.trim()) {
+              book.chapters.push({ id: uid(), title: val.trim() });
+              save();
+              renderAll();
+            }
+          });
+        });
+        chapterList.appendChild(addCh);
+        list.appendChild(chapterList);
+      }
+    });
+  }
+
+  function renderMain() {
+    const breadcrumb = document.getElementById('breadcrumb');
+    const title = document.getElementById('current-title');
+    const meta = document.getElementById('current-meta');
+    const notesArea = document.getElementById('notes-area');
+
+    const book = state.books.find(b => b.id === state.selectedBookId);
+
+    if (!book) {
+      breadcrumb.textContent = 'Welcome';
+      title.textContent = 'Pick a book to start';
+      meta.textContent = 'Or add one from the sidebar';
+      notesArea.innerHTML = `<div class="empty-state"><div class="icon">📖</div><p>Add a book from the sidebar, then hold the mic to start annotating.</p></div>`;
+      return;
+    }
+
+    const chapter = state.selectedChapterId ? book.chapters.find(c => c.id === state.selectedChapterId) : null;
+
+    if (chapter) {
+      breadcrumb.textContent = book.title;
+      title.textContent = chapter.title;
+      meta.textContent = 'Chapter annotations';
+    } else {
+      breadcrumb.textContent = 'Books';
+      title.textContent = book.title;
+      meta.textContent = 'All annotations for this book';
+    }
+
+    const relevantNotes = state.notes.filter(n => {
+      if (chapter) return n.chapterId === chapter.id;
+      return n.bookId === book.id && !n.chapterId;
+    }).sort((a, b) => b.createdAt - a.createdAt);
+
+    if (relevantNotes.length === 0) {
+      notesArea.innerHTML = `<div class="empty-state"><div class="icon">🎙</div><p>Hold the mic to capture your first annotation here.</p></div>`;
+      return;
+    }
+
+    notesArea.innerHTML = '';
+    relevantNotes.forEach(note => {
+      const el = document.createElement('div');
+      el.className = 'note';
+      const date = new Date(note.createdAt);
+      const timeStr = date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+      el.innerHTML = `
+        <div class="note-header">
+          <span class="note-time">${timeStr}</span>
+          <button class="note-delete" aria-label="Delete">×</button>
+        </div>
+        <div class="note-body">${escapeHtml(note.text)}</div>
+      `;
+      el.querySelector('.note-delete').addEventListener('click', () => {
+        if (confirm('Delete this annotation?')) {
+          state.notes = state.notes.filter(n => n.id !== note.id);
+          save();
+          renderMain();
+        }
+      });
+      notesArea.appendChild(el);
+    });
+  }
+
+  function renderAll() { renderSidebar(); renderMain(); }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+
+  // ============ MODAL ============
+  let modalCallback = null;
+  function openModal(title, initial, callback) {
+    document.getElementById('modal-title').textContent = title;
+    const input = document.getElementById('modal-input');
+    input.value = initial || '';
+    modalCallback = callback;
+    document.getElementById('modal-backdrop').classList.add('active');
+    setTimeout(() => input.focus(), 50);
+  }
+  function closeModal() {
+    document.getElementById('modal-backdrop').classList.remove('active');
+    modalCallback = null;
+  }
+  document.getElementById('modal-cancel').addEventListener('click', closeModal);
+  document.getElementById('modal-save').addEventListener('click', () => {
+    const val = document.getElementById('modal-input').value;
+    if (modalCallback) modalCallback(val);
+    closeModal();
+  });
+  document.getElementById('modal-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('modal-save').click();
+    if (e.key === 'Escape') closeModal();
+  });
+
+  document.getElementById('add-book-btn').addEventListener('click', () => {
+    openModal('Add book', '', (val) => {
+      if (val.trim()) {
+        state.books.push({ id: uid(), title: val.trim(), chapters: [], expanded: true });
+        save();
+        renderAll();
+      }
+    });
+  });
+
+  document.getElementById('books-header').addEventListener('click', function() {
+    this.classList.toggle('collapsed');
+    document.getElementById('book-list').style.display = this.classList.contains('collapsed') ? 'none' : '';
+    document.getElementById('add-book-btn').style.display = this.classList.contains('collapsed') ? 'none' : '';
+  });
+
+  // ============ SPEECH RECOGNITION ============
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recognition = null;
+  let isRecording = false;
+  let currentTranscript = '';
+
+  if (!SpeechRecognition) {
+    document.getElementById('browser-warning').style.display = 'block';
+  } else {
+    recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (event) => {
+      let finalText = '';
+      let interimText = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) finalText += transcript;
+        else interimText += transcript;
+      }
+      if (finalText) currentTranscript += finalText;
+      document.getElementById('recording-transcript').textContent = (currentTranscript + interimText) || '…';
+    };
+
+    recognition.onerror = (e) => {
+      console.error('speech error:', e.error);
+      if (e.error === 'not-allowed') {
+        alert('Microphone permission denied. Please allow it in your browser settings.');
+      }
+      stopRecording();
+    };
+
+    recognition.onend = () => {
+      if (isRecording) {
+        // recognizer auto-stopped but user still holding — restart
+        try { recognition.start(); } catch (e) {}
+      }
+    };
+  }
+
+  const micBtn = document.getElementById('mic-btn');
+
+  function startRecording() {
+    if (!recognition) {
+      alert('Speech recognition not supported in this browser. Use Chrome, Edge, or Safari.');
+      return;
+    }
+    if (!state.selectedBookId) {
+      alert('Pick a book first — annotations need somewhere to live.');
+      return;
+    }
+    isRecording = true;
+    currentTranscript = '';
+    document.getElementById('recording-transcript').textContent = '…';
+    document.getElementById('recording-indicator').classList.add('active');
+    micBtn.classList.add('recording');
+    try { recognition.start(); } catch (e) { console.error(e); }
+  }
+
+  function stopRecording() {
+    if (!isRecording) return;
+    isRecording = false;
+    micBtn.classList.remove('recording');
+    document.getElementById('recording-indicator').classList.remove('active');
+    try { recognition.stop(); } catch (e) {}
+
+    const text = currentTranscript.trim();
+    if (text) {
+      state.notes.push({
+        id: uid(),
+        bookId: state.selectedBookId,
+        chapterId: state.selectedChapterId,
+        text: text,
+        createdAt: Date.now(),
+      });
+      save();
+      renderMain();
+    }
+    currentTranscript = '';
+  }
+
+  // Hold-to-record on both mouse and touch
+  micBtn.addEventListener('mousedown', (e) => { e.preventDefault(); startRecording(); });
+  micBtn.addEventListener('mouseup', (e) => { e.preventDefault(); stopRecording(); });
+  micBtn.addEventListener('mouseleave', () => { if (isRecording) stopRecording(); });
+
+  micBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); }, { passive: false });
+  micBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopRecording(); }, { passive: false });
+
+  // ============ INIT ============
+  load();
+
+  // Seed with a sample book if empty, so the UI isn't naked
+  if (state.books.length === 0) {
+    state.books.push({
+      id: uid(),
+      title: 'East of Eden',
+      chapters: [
+        { id: uid(), title: 'Part One' },
+        { id: uid(), title: 'Part Two' },
+      ],
+      expanded: true,
+    });
+    save();
+  }
+
+  renderAll();
+</script>
+
+</body>
+</html>
