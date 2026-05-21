@@ -1,0 +1,8 @@
+{
+  "name": "blurt",
+  "private": true,
+  "description": "Voice annotation app for books",
+  "dependencies": {
+    "groq-sdk": "^0.15.0"
+  }
+}

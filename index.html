@@ -298,6 +298,38 @@
 
   .note-move:hover { background: rgba(139, 90, 60, 0.1); color: var(--accent); }
 
+  .note-route-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 8px;
+  }
+
+  .note-route-hint button {
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: inherit;
+    padding: 0;
+    font-family: var(--sans);
+  }
+
+  .recording-error {
+    margin-top: 8px;
+  }
+
+  .recording-error button {
+    margin-top: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: var(--sans);
+  }
+
   .misc-item {
     padding: 8px 20px;
     cursor: pointer;
@@ -525,18 +557,6 @@
 
   .modal-actions button.primary:hover { background: #75492f; }
 
-  .browser-warning {
-    background: #fff8e1;
-    border: 1px solid #f5c97a;
-    color: #7a5a18;
-    padding: 8px 14px;
-    border-radius: 6px;
-    font-size: 12px;
-    margin: 12px 40px 0;
-    display: none;
-  }
-
-  /* ============ MOBILE ============ */
   .menu-btn {
     display: none;
     position: absolute;
@@ -587,8 +607,6 @@
 
     .notes-area { padding: 16px 20px 100px; padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
 
-    .browser-warning { margin: 12px 20px 0; }
-
     .mic-bar { padding: 0 12px calc(10px + env(safe-area-inset-bottom, 0px)); }
 
     .mic-bar-btn { height: 60px; font-size: 16px; }
@@ -632,10 +650,6 @@
     <div class="current-meta" id="current-meta">Hold the bar below and speak — we'll file it for you</div>
   </div>
 
-  <div class="browser-warning" id="browser-warning">
-    Your browser doesn't support speech recognition. Try Chrome, Edge, or Safari.
-  </div>
-
   <div class="notes-area" id="notes-area">
     <div class="empty-state">
       <div class="icon">📖</div>
@@ -648,7 +662,7 @@
   <div class="recording-indicator" id="recording-indicator">
     <div class="recording-label">
       <span class="recording-dot"></span>
-      Listening
+      <span id="recording-status-label">Listening</span>
     </div>
     <div class="recording-transcript" id="recording-transcript">…</div>
   </div>
@@ -701,51 +715,7 @@
 
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
-  // ============ AUTO-ROUTE ============
-  function phraseScore(phrase, haystack) {
-    if (!phrase || phrase.length < 2) return 0;
-    if (haystack.includes(phrase)) return phrase.length * 2;
-    const words = phrase.split(/\s+/).filter(w => w.length > 2);
-    let score = 0;
-    for (const w of words) {
-      if (haystack.includes(w)) score += w.length;
-    }
-    return score;
-  }
-
-  function routeNote(text) {
-    const lower = text.toLowerCase();
-    let best = { bookId: MISC_ID, chapterId: null, score: 0 };
-
-    for (const book of state.books) {
-      const bookScore = phraseScore(book.title.toLowerCase(), lower);
-      let bestChapter = null;
-      let bestChapScore = 0;
-
-      for (const chap of book.chapters) {
-        const chapScore = phraseScore(chap.title.toLowerCase(), lower);
-        if (chapScore > bestChapScore) {
-          bestChapScore = chapScore;
-          bestChapter = chap;
-        }
-      }
-
-      const combined = bookScore + bestChapScore * 1.5;
-      if (combined > best.score) {
-        best = {
-          bookId: book.id,
-          chapterId: bestChapter && bestChapScore > 0 ? bestChapter.id : null,
-          score: combined,
-        };
-      } else if (bookScore > best.score) {
-        best = { bookId: book.id, chapterId: null, score: bookScore };
-      }
-    }
-
-    if (best.score < 3) return { bookId: MISC_ID, chapterId: null };
-    return best;
-  }
-
+  // ============ AUTO-ROUTE (display helpers) ============
   function isMiscNote(note) {
     return note.bookId === MISC_ID || note.bookId == null ||
       !state.books.some(b => b.id === note.bookId);
@@ -845,6 +815,10 @@
       </div>
       ${showRoute ? `<div class="note-route">${escapeHtml(getNoteLocation(note))}</div>` : ''}
       <div class="note-body">${escapeHtml(note.text)}</div>
+      ${note.routingConfidence && note.routingConfidence !== 'high' ? `
+        <div class="note-route-hint">${showRoute ? '' : `Saved to ${escapeHtml(getNoteLocation(note))}. `}Wrong place?
+          <button type="button" class="note-reassign">Tap to move</button>
+        </div>` : ''}
     `;
     el.querySelector('.note-delete').addEventListener('click', () => {
       if (confirm('Delete this annotation?')) {
@@ -854,6 +828,8 @@
       }
     });
     el.querySelector('.note-move').addEventListener('click', () => openMoveModal(note));
+    const reassign = el.querySelector('.note-reassign');
+    if (reassign) reassign.addEventListener('click', () => openMoveModal(note));
     return el;
   }
 
@@ -1039,105 +1015,196 @@
     item.style.display = this.classList.contains('collapsed') ? 'none' : '';
   });
 
-  // ============ SPEECH RECOGNITION ============
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let recognition = null;
+  // ============ AUDIO RECORDING + GROQ BACKEND ============
+  let mediaStream = null;
+  let mediaRecorder = null;
+  let audioChunks = [];
   let isRecording = false;
-  let currentTranscript = '';
-
-  if (!SpeechRecognition) {
-    document.getElementById('browser-warning').style.display = 'block';
-  } else {
-    recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onresult = (event) => {
-      let finalText = '';
-      let interimText = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) finalText += transcript;
-        else interimText += transcript;
-      }
-      if (finalText) currentTranscript += finalText;
-      document.getElementById('recording-transcript').textContent = (currentTranscript + interimText) || '…';
-    };
-
-    recognition.onerror = (e) => {
-      console.warn('speech error:', e.error);
-      if (!isRecording) return;
-
-      if (e.error === 'not-allowed') {
-        alert('Microphone permission denied. Please allow it in your browser settings.');
-        stopRecording();
-        return;
-      }
-      if (e.error === 'audio-capture' || e.error === 'service-not-available') {
-        alert('Could not access the microphone. Check your device and browser settings.');
-        stopRecording();
-        return;
-      }
-
-      // Benign / recoverable — recognizer often stops after silence; onend will restart
-      if (e.error === 'no-speech' || e.error === 'aborted' || e.error === 'network') return;
-    };
-
-    recognition.onend = () => {
-      if (!isRecording) return;
-      // Brief delay avoids InvalidStateError when restarting immediately
-      setTimeout(() => {
-        if (!isRecording) return;
-        try { recognition.start(); } catch (e) { console.warn('speech restart:', e); }
-      }, 150);
-    };
-  }
+  let isProcessing = false;
+  let pendingAudioBlob = null;
+  let pendingMimeType = 'audio/webm';
 
   const micBtn = document.getElementById('mic-btn');
   const micBarLabel = document.getElementById('mic-bar-label');
+  const recordingIndicator = document.getElementById('recording-indicator');
+  const recordingTranscript = document.getElementById('recording-transcript');
+  const recordingStatusLabel = document.getElementById('recording-status-label');
 
-  function startRecording() {
-    if (!recognition) {
-      alert('Speech recognition not supported in this browser. Use Chrome, Edge, or Safari.');
+  function pickMimeType() {
+    const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/aac'];
+    return types.find(t => MediaRecorder.isTypeSupported(t)) || '';
+  }
+
+  function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') resolve(reader.result.split(',')[1]);
+        else reject(new Error('Failed to encode audio'));
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async function getErrorMessage(res) {
+    try {
+      const data = await res.json();
+      return data.error || res.statusText;
+    } catch {
+      return res.statusText || 'Request failed';
+    }
+  }
+
+  function showRecordingIndicator(statusLabel, bodyHtml) {
+    recordingStatusLabel.textContent = statusLabel;
+    recordingTranscript.innerHTML = bodyHtml;
+    recordingIndicator.classList.add('active');
+  }
+
+  function hideRecordingIndicator() {
+    recordingIndicator.classList.remove('active');
+    recordingTranscript.textContent = '…';
+    recordingStatusLabel.textContent = 'Listening';
+  }
+
+  function saveNoteFromRoute(route) {
+    const note = {
+      id: uid(),
+      bookId: route.destinationBookId || MISC_ID,
+      chapterId: route.destinationChapterId || null,
+      text: route.noteText.trim(),
+      routingConfidence: route.confidence || 'low',
+      createdAt: Date.now(),
+    };
+    if (!note.text) return;
+    state.notes.push(note);
+    save();
+    showRouteToast('Saved to ' + getNoteLocation(note));
+    renderAll();
+  }
+
+  async function processRecording(blob) {
+    if (!blob || !blob.size) {
+      hideRecordingIndicator();
       return;
     }
-    isRecording = true;
-    currentTranscript = '';
-    document.getElementById('recording-transcript').textContent = '…';
-    document.getElementById('recording-indicator').classList.add('active');
-    micBtn.classList.add('recording');
-    micBarLabel.textContent = 'Listening…';
-    try { recognition.start(); } catch (e) { console.error(e); }
+
+    pendingAudioBlob = blob;
+    isProcessing = true;
+    showRecordingIndicator('Transcribing…', 'Sending audio…');
+
+    try {
+      const base64 = await blobToBase64(blob);
+      const filename = pendingMimeType.includes('mp4') || pendingMimeType.includes('aac')
+        ? 'recording.m4a' : 'recording.webm';
+
+      const transcribeRes = await fetch('/api/transcribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ audio: base64, mimeType: pendingMimeType, filename }),
+      });
+      if (!transcribeRes.ok) throw new Error(await getErrorMessage(transcribeRes));
+
+      const { transcript } = await transcribeRes.json();
+      if (!transcript || !transcript.trim()) {
+        hideRecordingIndicator();
+        pendingAudioBlob = null;
+        return;
+      }
+
+      showRecordingIndicator('Transcribing…', escapeHtml(transcript.trim()));
+
+      const defaultBookId = (state.selectedBookId && state.selectedBookId !== MISC_ID)
+        ? state.selectedBookId
+        : MISC_ID;
+
+      const routeRes = await fetch('/api/route', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transcript: transcript.trim(),
+          books: state.books,
+          defaultBookId,
+          defaultChapterId: state.selectedChapterId || null,
+        }),
+      });
+      if (!routeRes.ok) throw new Error(await getErrorMessage(routeRes));
+
+      const route = await routeRes.json();
+      saveNoteFromRoute(route);
+      pendingAudioBlob = null;
+      hideRecordingIndicator();
+    } catch (err) {
+      console.error('processRecording:', err);
+      const retryBtnId = 'recording-retry-btn';
+      showRecordingIndicator('Error', `
+        <div>${escapeHtml(err.message || 'Something went wrong')}</div>
+        <div class="recording-error">
+          <button type="button" id="${retryBtnId}">Retry</button>
+        </div>
+      `);
+      document.getElementById(retryBtnId)?.addEventListener('click', () => {
+        if (pendingAudioBlob) processRecording(pendingAudioBlob);
+      });
+    } finally {
+      isProcessing = false;
+      micBtn.disabled = false;
+    }
+  }
+
+  async function startRecording() {
+    if (isRecording || isProcessing) return;
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      alert('Microphone recording is not supported in this browser.');
+      return;
+    }
+
+    try {
+      if (!mediaStream) {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+
+      audioChunks = [];
+      const mimeType = pickMimeType();
+      mediaRecorder = new MediaRecorder(mediaStream, mimeType ? { mimeType } : undefined);
+      pendingMimeType = mediaRecorder.mimeType || mimeType || 'audio/webm';
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunks.push(e.data);
+      };
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(audioChunks, { type: pendingMimeType });
+        processRecording(blob);
+      };
+
+      mediaRecorder.start(250);
+      isRecording = true;
+      micBtn.classList.add('recording');
+      micBarLabel.textContent = 'Listening…';
+      showRecordingIndicator('Listening', '…');
+    } catch (err) {
+      console.error('startRecording:', err);
+      alert('Microphone permission denied. Please allow it in your browser settings.');
+    }
   }
 
   function stopRecording() {
-    if (!isRecording) return;
+    if (!isRecording || !mediaRecorder) return;
     isRecording = false;
     micBtn.classList.remove('recording');
     micBarLabel.textContent = 'Hold to talk';
-    document.getElementById('recording-indicator').classList.remove('active');
-    try { recognition.stop(); } catch (e) {}
+    micBtn.disabled = true;
 
-    const text = currentTranscript.trim();
-    if (text) {
-      const route = routeNote(text);
-      const note = {
-        id: uid(),
-        bookId: route.bookId,
-        chapterId: route.chapterId,
-        text: text,
-        createdAt: Date.now(),
-      };
-      state.notes.push(note);
-      save();
-      showRouteToast('Saved to ' + getNoteLocation(note));
-      renderAll();
+    if (mediaRecorder.state !== 'inactive') {
+      if (typeof mediaRecorder.requestData === 'function') mediaRecorder.requestData();
+      mediaRecorder.stop();
+    } else {
+      micBtn.disabled = false;
     }
-    currentTranscript = '';
   }
 
-  // Hold-to-record — pointer capture keeps recording if the cursor drifts off the button
   micBtn.addEventListener('pointerdown', (e) => {
     e.preventDefault();
     micBtn.setPointerCapture(e.pointerId);
@@ -1150,8 +1217,9 @@
   });
   micBtn.addEventListener('pointercancel', () => { if (isRecording) stopRecording(); });
 
-  // Drag off the mic without releasing → stop (PLAN 1.2)
-  micBtn.addEventListener('mouseleave', () => { if (isRecording) stopRecording(); });
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    micBtn.addEventListener('mouseleave', () => { if (isRecording) stopRecording(); });
+  }
 
   // ============ INIT ============
   load();
