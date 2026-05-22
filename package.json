@@ -3,6 +3,7 @@
   "private": true,
   "description": "Voice annotation app for books",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.98.0",
     "groq-sdk": "^0.15.0"
   }
 }

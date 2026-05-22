@@ -11,7 +11,13 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: 'GROQ_API_KEY is not configured' });
   }
 
-  const { audio, mimeType = 'audio/webm', filename = 'recording.webm' } = req.body || {};
+  const {
+    audio,
+    mimeType = 'audio/webm',
+    filename = 'recording.webm',
+    books = [],
+    lists = [],
+  } = req.body || {};
 
   if (!audio || typeof audio !== 'string') {
     return res.status(400).json({ error: 'Missing audio (base64 string required)' });
@@ -26,11 +32,23 @@ module.exports = async function handler(req, res) {
     const groq = new Groq({ apiKey });
     const file = await toFile(buffer, filename, { type: mimeType });
 
+    const vocab = [
+      'Blurt',
+      'add to',
+      'add a list',
+      'to-do list',
+      'miscellaneous',
+      ...books.filter(Boolean),
+      ...lists.filter(Boolean),
+    ];
+    const prompt = vocab.join(', ').slice(0, 220);
+
     const result = await groq.audio.transcriptions.create({
       file,
       model: 'whisper-large-v3',
       language: 'en',
       response_format: 'json',
+      prompt,
     });
 
     return res.status(200).json({ transcript: result.text || '' });

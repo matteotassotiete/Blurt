@@ -24,6 +24,7 @@
     --mic-red: #c54a3a;
     --hover-bg: rgba(0, 0, 0, 0.03);
     --selected-bg: rgba(139, 90, 60, 0.08);
+    --canvas: #ffffff;
     --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
     --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
@@ -41,6 +42,8 @@
     --mic-red: #e05a48;
     --hover-bg: rgba(255, 255, 255, 0.04);
     --selected-bg: rgba(196, 154, 108, 0.12);
+    --canvas: var(--bg-card);
+    color-scheme: dark;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -233,6 +236,11 @@
     padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
   }
 
+  .notes-area.has-notes {
+    padding: 0;
+    background: var(--canvas);
+  }
+
   .empty-state {
     text-align: center;
     padding: 80px 20px;
@@ -242,27 +250,148 @@
   .empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
   .empty-state p { font-size: 14px; font-style: italic; }
 
-  .note {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px 20px;
-    margin-bottom: 12px;
+  /* ============ NOTES CANVAS (Apple Notes style) ============ */
+  .notes-canvas {
+    min-height: 100%;
+    padding: 32px 48px 120px;
+    max-width: 720px;
+    margin: 0 auto;
+    background: var(--canvas);
+  }
+
+  .note-entry {
     position: relative;
+    margin-top: 1.75em;
+    padding-left: 1.5em;
+    transition: background 0.12s, box-shadow 0.12s;
+    -webkit-touch-callout: none;
   }
 
-  .note-header {
+  .note-entry:first-child { margin-top: 0; }
+
+  .note-text {
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--text);
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  .todo-item {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
   }
 
-  .note-time {
-    font-size: 11px;
+  .todo-item input[type="checkbox"] {
+    margin-top: 5px;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  .todo-item.done .note-text {
+    text-decoration: line-through;
+    color: var(--text-faint);
+  }
+
+  .note-toolbar {
+    display: none;
+  }
+
+  .note-meta {
+    font-size: 10px;
     color: var(--text-faint);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+
+  .note-entry:hover .note-meta,
+  .note-entry.show-meta .note-meta {
+    opacity: 1;
+  }
+
+  .note-entry.press-hold {
+    background: var(--selected-bg);
+    border-radius: 8px;
+    padding: 10px 12px 10px calc(1.5em + 12px);
+    margin-left: -12px;
+    margin-right: -12px;
+  }
+
+  .note-action-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 180;
+    background: transparent;
+  }
+
+  .note-action-menu {
+    position: fixed;
+    z-index: 190;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    padding: 6px;
+    min-width: 168px;
+  }
+
+  .note-action-menu button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 11px 14px;
+    border: none;
+    background: none;
+    font-family: var(--sans);
+    font-size: 15px;
+    color: var(--text);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .note-action-menu button:hover,
+  .note-action-menu button:focus {
+    background: var(--hover-bg);
+    outline: none;
+  }
+
+  .note-action-menu button.danger {
+    color: var(--mic-red);
+  }
+
+  .note-time {
+    font-size: 10px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: auto;
+  }
+
+  .note-route {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .note-entry:hover,
+  .note-entry.expanded {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 10px 12px 10px calc(1.5em + 12px);
+    margin-left: -12px;
+    margin-right: -12px;
+    box-shadow: 0 0 0 1px var(--border);
   }
 
   .note-delete {
@@ -273,69 +402,25 @@
     font-size: 16px;
     padding: 2px 6px;
     border-radius: 4px;
-    opacity: 0;
-    transition: opacity 0.15s;
+    line-height: 1;
   }
 
-  .note:hover .note-delete { opacity: 1; }
   .note-delete:hover { background: rgba(197, 74, 58, 0.1); color: var(--mic-red); }
 
-  .note-body {
-    font-family: var(--serif);
-    font-size: 16px;
-    line-height: 1.6;
-    color: var(--text);
-  }
-
-  .note-route {
-    font-size: 11px;
-    color: var(--accent);
-    font-weight: 500;
-    margin-bottom: 6px;
-  }
-
-  .note-actions {
-    display: flex;
-    gap: 4px;
-    opacity: 0;
-    transition: opacity 0.15s;
-  }
-
-  .note:hover .note-actions { opacity: 1; }
-
+  .note-edit,
   .note-move {
     background: none;
     border: none;
     color: var(--text-faint);
     cursor: pointer;
     font-size: 11px;
-    padding: 2px 6px;
+    padding: 4px 8px;
     border-radius: 4px;
     font-family: var(--sans);
   }
 
+  .note-edit:hover,
   .note-move:hover { background: rgba(139, 90, 60, 0.1); color: var(--accent); }
-
-  .note-route-hint {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-top: 8px;
-  }
-
-  .note-route-hint button {
-    background: none;
-    border: none;
-    color: var(--accent);
-    cursor: pointer;
-    text-decoration: underline;
-    font-size: inherit;
-    padding: 0;
-    font-family: var(--sans);
-  }
-
-  .recording-error {
-    margin-top: 8px;
-  }
 
   .recording-error button {
     margin-top: 6px;
@@ -516,6 +601,77 @@
     padding: 16px 20px;
     z-index: 50;
     pointer-events: none;
+    gap: 12px;
+  }
+
+  .top-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: auto;
+  }
+
+  .home-back-btn {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    height: 40px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-card);
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .home-back-btn:hover {
+    background: var(--hover-bg);
+  }
+
+  .main.browse-mode .home-back-btn {
+    display: flex;
+  }
+
+  .breadcrumb-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .breadcrumb-home-link {
+    display: none;
+    border: none;
+    background: none;
+    padding: 0;
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    cursor: pointer;
+  }
+
+  .breadcrumb-home-link:hover {
+    text-decoration: underline;
+  }
+
+  .main.browse-mode .breadcrumb-home-link {
+    display: inline;
+  }
+
+  .breadcrumb-sep {
+    display: none;
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+
+  .main.browse-mode .breadcrumb-sep {
+    display: inline;
   }
 
   .top-bar > * { pointer-events: auto; }
@@ -533,6 +689,7 @@
     justify-content: center;
     color: var(--text);
     margin-left: auto;
+    pointer-events: auto;
   }
 
   .menu-btn {
@@ -663,7 +820,18 @@
     font-size: 14px;
     font-family: var(--sans);
     margin-bottom: 16px;
-    background: var(--bg);
+    background: var(--bg-card);
+    color: var(--text);
+  }
+
+  .modal select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .modal select option {
+    background: var(--bg-card);
+    color: var(--text);
   }
 
   /* ============ MODAL ============ */
@@ -694,7 +862,8 @@
     font-weight: 500;
   }
 
-  .modal input {
+  .modal input,
+  .modal textarea {
     width: 100%;
     padding: 10px 12px;
     border: 1px solid var(--border);
@@ -702,10 +871,13 @@
     font-size: 14px;
     font-family: var(--sans);
     margin-bottom: 16px;
-    background: var(--bg);
+    background: var(--bg-card);
+    color: var(--text);
+    resize: vertical;
   }
 
-  .modal input:focus { outline: none; border-color: var(--accent); }
+  .modal input:focus,
+  .modal textarea:focus { outline: none; border-color: var(--accent); }
 
   .modal-actions {
     display: flex;
@@ -719,7 +891,7 @@
     font-size: 13px;
     cursor: pointer;
     border: 1px solid var(--border);
-    background: var(--bg);
+    background: var(--bg-card);
     color: var(--text);
   }
 
@@ -780,6 +952,10 @@
 
     .notes-area { padding: 16px 20px 100px; padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
 
+    .notes-area.has-notes { padding: 0; }
+
+    .notes-canvas { padding: 24px 20px 120px; }
+
     .mic-bar { padding: 0 12px calc(10px + env(safe-area-inset-bottom, 0px)); }
 
     .mic-bar-btn { height: 60px; font-size: 16px; }
@@ -812,6 +988,7 @@
     </div>
     <div id="list-items"></div>
     <button class="add-btn" id="add-list-btn" style="margin-left:20px;width:calc(100% - 40px);">+ Add list</button>
+    <button class="add-btn" id="add-todo-list-btn" style="margin-left:20px;width:calc(100% - 40px);">+ Add to-do list</button>
   </div>
 
   <div class="category">
@@ -826,7 +1003,10 @@
 
 <main class="main home-mode" id="main">
   <div class="top-bar">
-    <button class="menu-btn" id="menu-btn" aria-label="Open menu">☰</button>
+    <div class="top-bar-left">
+      <button class="menu-btn" id="menu-btn" aria-label="Open menu">☰</button>
+      <button class="home-back-btn" id="home-back-btn" type="button" aria-label="Back to sorting">← Sort</button>
+    </div>
     <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">🌙</button>
   </div>
 
@@ -845,7 +1025,11 @@
   </div>
 
   <div class="main-header">
-    <div class="breadcrumb" id="breadcrumb">Welcome</div>
+    <div class="breadcrumb-row">
+      <button class="breadcrumb-home-link" id="breadcrumb-home-link" type="button">Sort</button>
+      <span class="breadcrumb-sep">·</span>
+      <div class="breadcrumb" id="breadcrumb">Welcome</div>
+    </div>
     <div class="current-title" id="current-title">Ready</div>
     <div class="current-meta" id="current-meta">Hold the bar below and speak — we'll file it for you</div>
   </div>
@@ -883,6 +1067,7 @@
   <div class="modal">
     <h3 id="modal-title">Add book</h3>
     <input type="text" id="modal-input" placeholder="Title…" autocomplete="off">
+    <textarea id="modal-textarea" placeholder="Annotation…" rows="5" style="display:none"></textarea>
     <select id="modal-dest" style="display:none"></select>
     <div class="modal-actions">
       <button id="modal-cancel">Cancel</button>
@@ -895,7 +1080,7 @@
   // ============ STATE ============
   let state = {
     books: [],
-    lists: [],           // [{ id, title }]
+    lists: [],           // [{ id, title, type: 'notes'|'todo' }]
     notes: [],
     screen: 'home',      // 'home' | 'browse'
     selectedBookId: null,
@@ -914,6 +1099,7 @@
         const parsed = JSON.parse(raw);
         state = { ...state, ...parsed };
         if (!state.lists) state.lists = [];
+        state.lists.forEach(l => { if (!l.type) l.type = 'notes'; });
         if (!state.screen) state.screen = 'home';
       }
     } catch (e) { console.error('load failed', e); }
@@ -952,6 +1138,7 @@
     state.selectedBookId = null;
     state.selectedChapterId = null;
     state.selectedListId = null;
+    closeSidebar();
     save();
     renderAll();
   }
@@ -964,21 +1151,49 @@
   function applyRouteCreations(route) {
     if (route.createBookTitle) {
       const book = { id: uid(), title: route.createBookTitle.trim(), chapters: [], expanded: true };
-      if (route.createChapterTitle) {
-        book.chapters.push({ id: uid(), title: route.createChapterTitle.trim() });
-      }
+      const chapters = route.createChapterTitles?.length
+        ? route.createChapterTitles
+        : (route.createChapterTitle ? [route.createChapterTitle] : []);
+      chapters.forEach((title) => {
+        book.chapters.push({ id: uid(), title: String(title).trim() });
+      });
       state.books.push(book);
       route.destinationBookId = book.id;
-      route.destinationChapterId = route.createChapterTitle ? book.chapters[0].id : null;
+      route.destinationChapterId = book.chapters.length === 1 ? book.chapters[0].id : null;
       route.destinationListId = null;
+    } else if (route.createChapterTitles?.length && route.destinationBookId) {
+      const book = state.books.find((b) => b.id === route.destinationBookId);
+      if (book) {
+        route.createChapterTitles.forEach((title) => {
+          book.chapters.push({ id: uid(), title: String(title).trim() });
+        });
+        book.expanded = true;
+        route.destinationChapterId = book.chapters.length === 1 ? book.chapters[0].id : null;
+      }
+    } else if (route.createChapterTitle && route.destinationBookId) {
+      const book = state.books.find((b) => b.id === route.destinationBookId);
+      if (book) {
+        const ch = { id: uid(), title: route.createChapterTitle.trim() };
+        book.chapters.push(ch);
+        book.expanded = true;
+        route.destinationChapterId = ch.id;
+      }
     }
     if (route.createListTitle) {
-      const list = { id: uid(), title: route.createListTitle.trim() };
+      const list = {
+        id: uid(),
+        title: route.createListTitle.trim(),
+        type: route.createListType === 'todo' ? 'todo' : 'notes',
+      };
       state.lists.push(list);
       route.destinationListId = list.id;
       route.destinationBookId = null;
       route.destinationChapterId = null;
     }
+  }
+
+  function getListForNote(note) {
+    return note.listId ? state.lists.find(l => l.id === note.listId) : null;
   }
 
   function updateLayout() {
@@ -1084,37 +1299,156 @@
     });
   }
 
-  function renderNoteCard(note, showRoute) {
+  function renderNoteEntry(note, showRoute) {
     const el = document.createElement('div');
-    el.className = 'note';
+    el.className = 'note-entry';
+    const list = getListForNote(note);
+    const isTodo = list && list.type === 'todo';
     const date = new Date(note.createdAt);
     const timeStr = date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    const bodyHtml = isTodo
+      ? `<label class="todo-item${note.checked ? ' done' : ''}">
+          <input type="checkbox"${note.checked ? ' checked' : ''} aria-label="Mark done">
+          <span class="note-text">${escapeHtml(note.text)}</span>
+        </label>`
+      : `<p class="note-text">${escapeHtml(note.text)}</p>`;
     el.innerHTML = `
-      <div class="note-header">
-        <span class="note-time">${timeStr}</span>
-        <div class="note-actions">
-          <button class="note-move" type="button">Move</button>
-          <button class="note-delete" aria-label="Delete" type="button">×</button>
-        </div>
-      </div>
-      ${showRoute ? `<div class="note-route">${escapeHtml(getNoteLocation(note))}</div>` : ''}
-      <div class="note-body">${escapeHtml(note.text)}</div>
-      ${note.routingConfidence && note.routingConfidence !== 'high' ? `
-        <div class="note-route-hint">${showRoute ? '' : `Saved to ${escapeHtml(getNoteLocation(note))}. `}Wrong place?
-          <button type="button" class="note-reassign">Tap to move</button>
-        </div>` : ''}
+      <div class="note-meta">${showRoute ? `<span class="note-route">${escapeHtml(getNoteLocation(note))}</span> · ` : ''}${timeStr}</div>
+      ${bodyHtml}
     `;
-    el.querySelector('.note-delete').addEventListener('click', () => {
-      if (confirm('Delete this annotation?')) {
+    if (isTodo) {
+      const cb = el.querySelector('input[type="checkbox"]');
+      cb.addEventListener('click', (e) => e.stopPropagation());
+      cb.addEventListener('change', () => {
+        note.checked = cb.checked;
+        save();
+        renderMain();
+      });
+    }
+    attachNoteActions(el, note);
+    return el;
+  }
+
+  let activeNoteMenu = null;
+
+  function closeNoteActionMenu() {
+    if (!activeNoteMenu) return;
+    activeNoteMenu.backdrop.remove();
+    activeNoteMenu.menu.remove();
+    activeNoteMenu.entry.classList.remove('press-hold', 'show-meta');
+    activeNoteMenu = null;
+  }
+
+  function showNoteActionMenu(note, entry, x, y) {
+    closeNoteActionMenu();
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'note-action-backdrop';
+    backdrop.addEventListener('click', closeNoteActionMenu);
+
+    const menu = document.createElement('div');
+    menu.className = 'note-action-menu';
+    menu.innerHTML = `
+      <button type="button" data-action="edit">Edit</button>
+      <button type="button" data-action="move">Move</button>
+      <button type="button" data-action="delete" class="danger">Delete</button>
+    `;
+
+    document.body.appendChild(backdrop);
+    document.body.appendChild(menu);
+
+    const rect = entry.getBoundingClientRect();
+    const menuW = menu.offsetWidth;
+    const menuH = menu.offsetHeight;
+    let left = typeof x === 'number' ? x : rect.left;
+    let top = typeof y === 'number' ? y : rect.top;
+    left = Math.max(12, Math.min(left, window.innerWidth - menuW - 12));
+    top = Math.max(12, Math.min(top, window.innerHeight - menuH - 12));
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+
+    entry.classList.add('press-hold', 'show-meta');
+    activeNoteMenu = { backdrop, menu, entry };
+
+    menu.addEventListener('click', (e) => {
+      const action = e.target.closest('[data-action]')?.dataset.action;
+      if (!action) return;
+      closeNoteActionMenu();
+      if (action === 'edit') openEditModal(note);
+      else if (action === 'move') openMoveModal(note);
+      else if (action === 'delete' && confirm('Delete this annotation?')) {
         state.notes = state.notes.filter(n => n.id !== note.id);
         save();
         renderMain();
       }
     });
-    el.querySelector('.note-move').addEventListener('click', () => openMoveModal(note));
-    const reassign = el.querySelector('.note-reassign');
-    if (reassign) reassign.addEventListener('click', () => openMoveModal(note));
-    return el;
+
+    if (navigator.vibrate) navigator.vibrate(12);
+  }
+
+  function attachNoteActions(el, note) {
+    let pressTimer = null;
+    let startX = 0;
+    let startY = 0;
+
+    function clearPress() {
+      if (pressTimer) clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+
+    function onPressStart(clientX, clientY, target) {
+      if (target.closest('input[type="checkbox"]')) return;
+      startX = clientX;
+      startY = clientY;
+      clearPress();
+      pressTimer = setTimeout(() => {
+        showNoteActionMenu(note, el, clientX, clientY);
+      }, 480);
+    }
+
+    function onPressMove(clientX, clientY) {
+      if (!pressTimer) return;
+      if (Math.abs(clientX - startX) > 10 || Math.abs(clientY - startY) > 10) clearPress();
+    }
+
+    el.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      onPressStart(e.clientX, e.clientY, e.target);
+    });
+    el.addEventListener('mousemove', (e) => onPressMove(e.clientX, e.clientY));
+    el.addEventListener('mouseup', clearPress);
+    el.addEventListener('mouseleave', clearPress);
+
+    el.addEventListener('touchstart', (e) => {
+      const t = e.touches[0];
+      onPressStart(t.clientX, t.clientY, e.target);
+    }, { passive: true });
+    el.addEventListener('touchmove', (e) => {
+      const t = e.touches[0];
+      onPressMove(t.clientX, t.clientY);
+    }, { passive: true });
+    el.addEventListener('touchend', clearPress);
+    el.addEventListener('touchcancel', clearPress);
+
+    el.addEventListener('contextmenu', (e) => {
+      if (e.target.closest('input[type="checkbox"]')) return;
+      e.preventDefault();
+      showNoteActionMenu(note, el, e.clientX, e.clientY);
+    });
+  }
+
+  function renderNotesCanvas(notes, showRoute) {
+    const canvas = document.createElement('div');
+    canvas.className = 'notes-canvas';
+    const sorted = [...notes].sort((a, b) => a.createdAt - b.createdAt);
+    sorted.forEach(note => canvas.appendChild(renderNoteEntry(note, showRoute)));
+    return canvas;
+  }
+
+  function showNotesPage(notesArea, notes, showRoute) {
+    notesArea.classList.add('has-notes');
+    notesArea.innerHTML = '';
+    notesArea.appendChild(renderNotesCanvas(notes, showRoute));
   }
 
   function renderMain() {
@@ -1134,15 +1468,16 @@
       const list = state.lists.find(l => l.id === state.selectedListId);
       breadcrumb.textContent = 'Lists';
       title.textContent = list ? list.title : 'List';
-      meta.textContent = 'Hold the bar below to add to this list';
-      const listNotes = state.notes.filter(n => n.listId === state.selectedListId)
-        .sort((a, b) => b.createdAt - a.createdAt);
+      meta.textContent = list && list.type === 'todo'
+        ? 'Hold the bar below to add a to-do item'
+        : 'Hold the bar below to add to this list';
+      const listNotes = state.notes.filter(n => n.listId === state.selectedListId);
       if (listNotes.length === 0) {
+        notesArea.classList.remove('has-notes');
         notesArea.innerHTML = `<div class="empty-state"><div class="icon">📝</div><p>No notes yet. Hold the bar below and speak.</p></div>`;
         return;
       }
-      notesArea.innerHTML = '';
-      listNotes.forEach(note => notesArea.appendChild(renderNoteCard(note, false)));
+      showNotesPage(notesArea, listNotes, false);
       return;
     }
 
@@ -1150,13 +1485,13 @@
       breadcrumb.textContent = 'Inbox';
       title.textContent = 'Miscellaneous';
       meta.textContent = 'Unsorted — move these when you\'re ready';
-      const miscNotes = state.notes.filter(isMiscNote).sort((a, b) => b.createdAt - a.createdAt);
+      const miscNotes = state.notes.filter(isMiscNote);
       if (miscNotes.length === 0) {
+        notesArea.classList.remove('has-notes');
         notesArea.innerHTML = `<div class="empty-state"><div class="icon">📥</div><p>No unsorted notes. When we can't match what you say to a book, it lands here.</p></div>`;
         return;
       }
-      notesArea.innerHTML = '';
-      miscNotes.forEach(note => notesArea.appendChild(renderNoteCard(note, false)));
+      showNotesPage(notesArea, miscNotes, false);
       return;
     }
 
@@ -1183,15 +1518,15 @@
       if (n.listId) return false;
       if (chapter) return n.chapterId === chapter.id;
       return n.bookId === book.id && !n.chapterId;
-    }).sort((a, b) => b.createdAt - a.createdAt);
+    });
 
     if (relevantNotes.length === 0) {
+      notesArea.classList.remove('has-notes');
       notesArea.innerHTML = `<div class="empty-state"><div class="icon"><svg class="mic-icon" style="width:48px;height:48px;margin:0 auto;opacity:0.35;color:var(--text-faint)" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11" rx="3" fill="currentColor"/><path d="M5 10.5a7 7 0 0 0 14 0" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/><path d="M12 17.5v3.5M8.5 21h7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg></div><p>Hold the bar below and speak — mention this book or chapter to file here.</p></div>`;
       return;
     }
 
-    notesArea.innerHTML = '';
-    relevantNotes.forEach(note => notesArea.appendChild(renderNoteCard(note, false)));
+    showNotesPage(notesArea, relevantNotes, false);
   }
 
   // ============ MOBILE SIDEBAR ============
@@ -1210,6 +1545,42 @@
 
   document.getElementById('menu-btn').addEventListener('click', openSidebar);
   sidebarOverlay.addEventListener('click', closeSidebar);
+  document.getElementById('home-back-btn').addEventListener('click', goHome);
+  document.getElementById('breadcrumb-home-link').addEventListener('click', goHome);
+
+  function isMobileSidebar() {
+    return window.matchMedia('(max-width: 599px)').matches;
+  }
+
+  let swipeStart = null;
+  const mainEl = document.getElementById('main');
+
+  mainEl.addEventListener('touchstart', (e) => {
+    if (!isMobileSidebar() || sidebar.classList.contains('open')) return;
+    const t = e.touches[0];
+    if (t.clientX > 36) return;
+    swipeStart = { x: t.clientX, y: t.clientY };
+  }, { passive: true });
+
+  mainEl.addEventListener('touchmove', (e) => {
+    if (!swipeStart) return;
+    const t = e.touches[0];
+    const dx = t.clientX - swipeStart.x;
+    const dy = Math.abs(t.clientY - swipeStart.y);
+    if (dx > 70 && dy < 60) {
+      openSidebar();
+      swipeStart = null;
+    } else if (dy > 60) {
+      swipeStart = null;
+    }
+  }, { passive: true });
+
+  mainEl.addEventListener('touchend', () => { swipeStart = null; }, { passive: true });
+  mainEl.addEventListener('touchcancel', () => { swipeStart = null; }, { passive: true });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeNoteActionMenu();
+  });
 
   function renderAll() {
     renderSidebar();
@@ -1228,7 +1599,7 @@
   function buildDestinations() {
     const dests = [{ bookId: MISC_ID, chapterId: null, listId: null, label: 'Miscellaneous' }];
     state.lists.forEach(l => {
-      dests.push({ bookId: null, chapterId: null, listId: l.id, label: l.title });
+      dests.push({ bookId: null, chapterId: null, listId: l.id, label: l.title + (l.type === 'todo' ? ' (to-do)' : '') });
     });
     state.books.forEach(b => {
       dests.push({ bookId: b.id, chapterId: null, listId: null, label: b.title });
@@ -1239,22 +1610,49 @@
     return dests;
   }
 
+  function resetModalFields() {
+    document.getElementById('modal-input').style.display = '';
+    document.getElementById('modal-textarea').style.display = 'none';
+    document.getElementById('modal-dest').style.display = 'none';
+  }
+
   function openModal(title, initial, callback) {
     document.getElementById('modal-title').textContent = title;
     const input = document.getElementById('modal-input');
-    const dest = document.getElementById('modal-dest');
-    input.style.display = '';
-    dest.style.display = 'none';
+    resetModalFields();
     input.value = initial || '';
     modalCallback = callback;
     document.getElementById('modal-backdrop').classList.add('active');
     setTimeout(() => input.focus(), 50);
   }
 
+  function openEditModal(note) {
+    document.getElementById('modal-title').textContent = 'Edit annotation';
+    const input = document.getElementById('modal-input');
+    const textarea = document.getElementById('modal-textarea');
+    input.style.display = 'none';
+    textarea.style.display = 'block';
+    textarea.value = note.text;
+    modalCallback = (val) => {
+      const text = (val || '').trim();
+      if (text) {
+        note.text = text;
+        save();
+        renderMain();
+      }
+    };
+    document.getElementById('modal-backdrop').classList.add('active');
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    }, 50);
+  }
+
   function openMoveModal(note) {
     document.getElementById('modal-title').textContent = 'Move annotation';
     const input = document.getElementById('modal-input');
     const dest = document.getElementById('modal-dest');
+    resetModalFields();
     input.style.display = 'none';
     dest.style.display = 'block';
     const destinations = buildDestinations();
@@ -1275,18 +1673,22 @@
 
   function closeModal() {
     document.getElementById('modal-backdrop').classList.remove('active');
-    document.getElementById('modal-input').style.display = '';
-    document.getElementById('modal-dest').style.display = 'none';
+    resetModalFields();
     modalCallback = null;
   }
   document.getElementById('modal-cancel').addEventListener('click', closeModal);
   document.getElementById('modal-save').addEventListener('click', () => {
-    const val = document.getElementById('modal-input').value;
+    const textarea = document.getElementById('modal-textarea');
+    const input = document.getElementById('modal-input');
+    const val = textarea.style.display !== 'none' ? textarea.value : input.value;
     if (modalCallback) modalCallback(val);
     closeModal();
   });
   document.getElementById('modal-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') document.getElementById('modal-save').click();
+    if (e.key === 'Escape') closeModal();
+  });
+  document.getElementById('modal-textarea').addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeModal();
   });
 
@@ -1318,7 +1720,17 @@
   document.getElementById('add-list-btn').addEventListener('click', () => {
     openModal('Add list', '', (val) => {
       if (val.trim()) {
-        state.lists.push({ id: uid(), title: val.trim() });
+        state.lists.push({ id: uid(), title: val.trim(), type: 'notes' });
+        save();
+        renderAll();
+      }
+    });
+  });
+
+  document.getElementById('add-todo-list-btn').addEventListener('click', () => {
+    openModal('Add to-do list', '', (val) => {
+      if (val.trim()) {
+        state.lists.push({ id: uid(), title: val.trim(), type: 'todo' });
         save();
         renderAll();
       }
@@ -1327,8 +1739,10 @@
 
   document.getElementById('lists-header').addEventListener('click', function() {
     this.classList.toggle('collapsed');
-    document.getElementById('list-items').style.display = this.classList.contains('collapsed') ? 'none' : '';
-    document.getElementById('add-list-btn').style.display = this.classList.contains('collapsed') ? 'none' : '';
+    const collapsed = this.classList.contains('collapsed');
+    document.getElementById('list-items').style.display = collapsed ? 'none' : '';
+    document.getElementById('add-list-btn').style.display = collapsed ? 'none' : '';
+    document.getElementById('add-todo-list-btn').style.display = collapsed ? 'none' : '';
   });
 
   document.querySelector('.sidebar-header').addEventListener('click', goHome);
@@ -1394,25 +1808,44 @@
 
   function saveNoteFromRoute(route) {
     applyRouteCreations(route);
-    const note = {
-      id: uid(),
-      bookId: route.destinationListId ? null : (route.destinationBookId || MISC_ID),
-      chapterId: route.destinationListId ? null : (route.destinationChapterId || null),
-      listId: route.destinationListId || null,
-      text: route.noteText.trim(),
-      routingConfidence: route.confidence || 'low',
-      createdAt: Date.now(),
-    };
-    if (!note.text) return;
-    state.notes.push(note);
+    const noteText = (route.noteText || '').trim();
+    let toastMsg = '';
+
+    if (noteText && !route.commandOnly) {
+      const note = {
+        id: uid(),
+        bookId: route.destinationListId ? null : (route.destinationBookId || MISC_ID),
+        chapterId: route.destinationListId ? null : (route.destinationChapterId || null),
+        listId: route.destinationListId || null,
+        text: noteText,
+        checked: false,
+        routingConfidence: route.confidence || 'low',
+        createdAt: Date.now(),
+      };
+      state.notes.push(note);
+      toastMsg = 'Saved to ' + getNoteLocation(note);
+    } else if (route.createBookTitle) {
+      const chapterCount = route.createChapterTitles?.length || (route.createChapterTitle ? 1 : 0);
+      toastMsg = chapterCount
+        ? `Created book: ${route.createBookTitle.trim()} (${chapterCount} chapters)`
+        : 'Created book: ' + route.createBookTitle.trim();
+    } else if (route.createChapterTitles?.length) {
+      toastMsg = `Added ${route.createChapterTitles.length} chapters`;
+    } else if (route.createChapterTitle) {
+      toastMsg = 'Added chapter: ' + route.createChapterTitle.trim();
+    } else if (route.createListTitle) {
+      toastMsg = 'Created list: ' + route.createListTitle.trim();
+    } else {
+      return;
+    }
+
     save();
-    const loc = getNoteLocation(note);
     if (state.screen === 'home') {
       showHomeSaved();
-      showRouteToast('Saved to ' + loc);
+      showRouteToast(toastMsg);
       renderSidebar();
     } else {
-      showRouteToast('Saved to ' + loc);
+      showRouteToast(toastMsg);
       renderAll();
     }
   }
@@ -1435,7 +1868,13 @@
       const transcribeRes = await fetch('/api/transcribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ audio: base64, mimeType: pendingMimeType, filename }),
+        body: JSON.stringify({
+          audio: base64,
+          mimeType: pendingMimeType,
+          filename,
+          books: state.books.map(b => b.title),
+          lists: state.lists.map(l => l.title),
+        }),
       });
       if (!transcribeRes.ok) throw new Error(await getErrorMessage(transcribeRes));
 
@@ -1451,12 +1890,15 @@
       let defaultBookId = MISC_ID;
       let defaultChapterId = null;
       let defaultListId = null;
+      const routingMode = state.screen === 'home' ? 'home' : 'context';
 
       if (state.screen === 'browse') {
         if (state.selectedListId) {
           defaultListId = state.selectedListId;
           defaultBookId = null;
-        } else if (state.selectedBookId && state.selectedBookId !== MISC_ID) {
+        } else if (state.selectedBookId === MISC_ID) {
+          defaultBookId = MISC_ID;
+        } else if (state.selectedBookId) {
           defaultBookId = state.selectedBookId;
           defaultChapterId = state.selectedChapterId || null;
         }
@@ -1472,6 +1914,7 @@
           defaultBookId,
           defaultChapterId,
           defaultListId,
+          routingMode,
         }),
       });
       if (!routeRes.ok) throw new Error(await getErrorMessage(routeRes));
@@ -1598,6 +2041,12 @@
   document.getElementById('theme-toggle').addEventListener('click', () => {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     setTheme(isDark ? 'light' : 'dark');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.note-entry')) {
+      document.querySelectorAll('.note-entry.expanded').forEach(n => n.classList.remove('expanded'));
+    }
   });
 
   // ============ INIT ============

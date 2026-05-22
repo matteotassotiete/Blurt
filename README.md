@@ -4,27 +4,36 @@ Voice annotation app for books. Hold the mic bar, speak, and notes are transcrib
 
 ## Local development (with Whisper + smart routing backend)
 
-The `/api` routes call [Groq](https://console.groq.com) for transcription and routing. API keys stay on the server — never in the browser.
+The `/api` routes use [Groq Whisper](https://console.groq.com) for transcription and [Claude Haiku](https://console.anthropic.com) (or Groq Llama) for smart routing. API keys stay on the server — never in the browser.
 
-### 1. Get a Groq API key
+### 1. Get API keys
+
+**Groq** (transcription — required):
 
 1. Sign up at [console.groq.com](https://console.groq.com)
 2. Go to **API Keys** → **Create API Key**
-3. Copy the key (shown once)
 
-### 2. Set the key locally
+**Anthropic** (routing — recommended):
+
+1. Sign up at [console.anthropic.com](https://console.anthropic.com)
+2. Go to **API Keys** → create a key
+
+If `ANTHROPIC_API_KEY` is set, routing uses Claude automatically. Without it, routing falls back to Groq Llama.
+
+### 2. Set keys locally
 
 ```bash
 cp .env.example .env.local
 ```
 
-Edit `.env.local` and replace the placeholder:
+Edit `.env.local`:
 
 ```
 GROQ_API_KEY=gsk_...
+ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-`.env*.local` is gitignored — do not commit your key.
+`.env*.local` is gitignored — do not commit your keys.
 
 ### 3. Install dependencies
 
@@ -71,10 +80,11 @@ Response: `{ "destinationBookId", "destinationChapterId", "noteText", "confidenc
 
 1. Push to `main` — Vercel redeploys automatically if Git is connected (see below).
 2. In [Vercel → project-96zp3 → Settings → Environment Variables](https://vercel.com/matteotassoti-6593s-projects/project-96zp3/settings/environment-variables), add:
-   - **Name:** `GROQ_API_KEY`
-   - **Value:** your key from [console.groq.com](https://console.groq.com)
+   - `GROQ_API_KEY` — your Groq key (transcription)
+   - `ANTHROPIC_API_KEY` — your Anthropic key (routing; recommended)
+   - Optional: `ROUTING_PROVIDER=anthropic` or `ROUTING_MODEL=claude-3-5-haiku-latest`
    - **Environments:** Production, Preview, Development
-3. **Redeploy** after adding the variable (Deployments → ⋯ → Redeploy).
+3. **Redeploy** after adding variables (Deployments → ⋯ → Redeploy).
 
 **Connect GitHub (one-time, for auto-deploy on push):**
 
