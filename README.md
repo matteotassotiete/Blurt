@@ -65,9 +65,27 @@ Response: `{ "destinationBookId", "destinationChapterId", "noteText", "confidenc
 
 ### Deploy to Vercel
 
-1. Push to GitHub
-2. Import the repo in [vercel.com](https://vercel.com)
-3. Add environment variable `GROQ_API_KEY` in **Project → Settings → Environment Variables**
-4. Redeploy
+**Production URL:** [https://project-96zp3.vercel.app](https://project-96zp3.vercel.app)
 
-Production URLs are HTTPS automatically (required for mic access on iPhone).
+**GitHub repo:** [github.com/matteotassotiete/Blurt](https://github.com/matteotassotiete/Blurt)
+
+1. Push to `main` — Vercel redeploys automatically if Git is connected (see below).
+2. In [Vercel → project-96zp3 → Settings → Environment Variables](https://vercel.com/matteotassoti-6593s-projects/project-96zp3/settings/environment-variables), add:
+   - **Name:** `GROQ_API_KEY`
+   - **Value:** your key from [console.groq.com](https://console.groq.com)
+   - **Environments:** Production, Preview, Development
+3. **Redeploy** after adding the variable (Deployments → ⋯ → Redeploy).
+
+**Connect GitHub (one-time, for auto-deploy on push):**
+
+1. Vercel dashboard → **project-96zp3** → **Settings** → **Git**
+2. Connect repository **matteotassotiete/Blurt**, branch `main`
+
+**iPhone:**
+
+1. Open `https://project-96zp3.vercel.app` in Safari
+2. Allow microphone when prompted
+3. Share → **Add to Home Screen**
+4. Hold the bottom bar, speak, release — wait for “Transcribing…”
+
+Production URLs are HTTPS automatically (required for mic on iPhone).

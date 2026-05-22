@@ -22,8 +22,25 @@
     --accent: #8b5a3c;
     --accent-light: #d4a574;
     --mic-red: #c54a3a;
+    --hover-bg: rgba(0, 0, 0, 0.03);
+    --selected-bg: rgba(139, 90, 60, 0.08);
     --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
     --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  [data-theme="dark"] {
+    --bg: #1a1816;
+    --bg-sidebar: #141210;
+    --bg-card: #242018;
+    --text: #f0ebe3;
+    --text-muted: #a89e92;
+    --text-faint: #7a7268;
+    --border: #3a342c;
+    --accent: #c49a6c;
+    --accent-light: #8b5a3c;
+    --mic-red: #e05a48;
+    --hover-bg: rgba(255, 255, 255, 0.04);
+    --selected-bg: rgba(196, 154, 108, 0.12);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -50,6 +67,7 @@
   .sidebar-header {
     padding: 24px 20px 16px;
     border-bottom: 1px solid var(--border);
+    cursor: pointer;
   }
 
   .app-title {
@@ -114,10 +132,10 @@
     user-select: none;
   }
 
-  .book-item:hover { background: rgba(0,0,0,0.03); }
+  .book-item:hover { background: var(--hover-bg); }
 
   .book-item.selected {
-    background: rgba(139, 90, 60, 0.08);
+    background: var(--selected-bg);
     border-left-color: var(--accent);
   }
 
@@ -141,10 +159,10 @@
     user-select: none;
   }
 
-  .chapter-item:hover { background: rgba(0,0,0,0.03); color: var(--text); }
+  .chapter-item:hover { background: var(--hover-bg); color: var(--text); }
 
   .chapter-item.selected {
-    background: rgba(139, 90, 60, 0.08);
+    background: var(--selected-bg);
     border-left-color: var(--accent-light);
     color: var(--text);
   }
@@ -339,10 +357,10 @@
     user-select: none;
   }
 
-  .misc-item:hover { background: rgba(0,0,0,0.03); color: var(--text); }
+  .misc-item:hover { background: var(--hover-bg); color: var(--text); }
 
   .misc-item.selected {
-    background: rgba(139, 90, 60, 0.08);
+    background: var(--selected-bg);
     border-left-color: var(--accent);
     color: var(--text);
   }
@@ -391,6 +409,13 @@
     transition: background 0.15s, transform 0.1s;
   }
 
+  .mic-icon {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    display: block;
+  }
+
   .mic-bar-btn:active { transform: scale(0.98); }
 
   .mic-bar-btn.recording {
@@ -402,8 +427,6 @@
     0%, 100% { box-shadow: 0 -2px 16px rgba(197, 74, 58, 0.25); }
     50% { box-shadow: 0 -2px 24px rgba(197, 74, 58, 0.45); }
   }
-
-  .mic-bar-icon { font-size: 22px; }
 
   .recording-indicator {
     position: absolute;
@@ -479,6 +502,157 @@
   .route-toast.visible {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
+  }
+
+  /* ============ TOP BAR ============ */
+  .top-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    z-index: 50;
+    pointer-events: none;
+  }
+
+  .top-bar > * { pointer-events: auto; }
+
+  .theme-toggle {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-card);
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    margin-left: auto;
+  }
+
+  .menu-btn {
+    position: static;
+    top: auto;
+    left: auto;
+  }
+
+  /* ============ HOME SCREEN ============ */
+  .home-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 32px 40px;
+    text-align: center;
+  }
+
+  .home-title {
+    font-family: var(--serif);
+    font-size: 42px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.5px;
+    margin-bottom: 32px;
+  }
+
+  .home-mic {
+    width: 120px;
+    height: 120px;
+    border-radius: 28px;
+    border: none;
+    background: var(--accent);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 32px rgba(139, 90, 60, 0.35);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s, box-shadow 0.2s;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+
+  .home-mic .mic-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .home-mic:hover { transform: scale(1.04); }
+
+  .home-mic.pop {
+    transform: scale(1.12);
+    box-shadow: 0 12px 40px rgba(139, 90, 60, 0.45);
+  }
+
+  .home-mic.recording {
+    background: var(--mic-red);
+    animation: home-mic-pulse 1.2s ease-in-out infinite;
+  }
+
+  @keyframes home-mic-pulse {
+    0%, 100% { box-shadow: 0 8px 32px rgba(197, 74, 58, 0.35); }
+    50% { box-shadow: 0 8px 48px rgba(197, 74, 58, 0.55); }
+  }
+
+  .home-hint {
+    margin-top: 28px;
+    font-size: 15px;
+    color: var(--text-muted);
+    line-height: 1.55;
+    max-width: 320px;
+  }
+
+  .home-subhint {
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--text-faint);
+    font-style: italic;
+    max-width: 320px;
+    line-height: 1.5;
+  }
+
+  .home-saved {
+    margin-top: 24px;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--accent);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.3s, transform 0.3s;
+  }
+
+  .home-saved.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .main.browse-mode .home-screen { display: none; }
+  .main.home-mode .main-header,
+  .main.home-mode .notes-area,
+  .main.home-mode .mic-bar { display: none; }
+
+  .list-item {
+    padding: 8px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-muted);
+    border-left: 3px solid transparent;
+    user-select: none;
+  }
+
+  .list-item:hover { background: var(--hover-bg); color: var(--text); }
+
+  .list-item.selected {
+    background: var(--selected-bg);
+    border-left-color: var(--accent);
+    color: var(--text);
   }
 
   .modal select {
@@ -559,9 +733,6 @@
 
   .menu-btn {
     display: none;
-    position: absolute;
-    top: 20px;
-    left: 16px;
     width: 40px;
     height: 40px;
     border: 1px solid var(--border);
@@ -587,6 +758,8 @@
 
   @media (max-width: 599px) {
     .menu-btn { display: flex; }
+
+    .top-bar { padding: 12px 16px; }
 
     .sidebar {
       position: fixed;
@@ -633,6 +806,15 @@
   </div>
 
   <div class="category">
+    <div class="category-header" id="lists-header">
+      <span class="chevron">▼</span>
+      <span>Lists</span>
+    </div>
+    <div id="list-items"></div>
+    <button class="add-btn" id="add-list-btn" style="margin-left:20px;width:calc(100% - 40px);">+ Add list</button>
+  </div>
+
+  <div class="category">
     <div class="category-header" id="misc-header">
       <span class="chevron">▼</span>
       <span>Miscellaneous</span>
@@ -642,8 +824,26 @@
   </div>
 </aside>
 
-<main class="main">
-  <button class="menu-btn" id="menu-btn" aria-label="Open menu">☰</button>
+<main class="main home-mode" id="main">
+  <div class="top-bar">
+    <button class="menu-btn" id="menu-btn" aria-label="Open menu">☰</button>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+  </div>
+
+  <div class="home-screen" id="home-screen">
+    <h1 class="home-title">Blurt</h1>
+    <button class="home-mic" id="home-mic-btn" aria-label="Hold to record">
+      <svg class="mic-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="9" y="2.5" width="6" height="11" rx="3" fill="currentColor"/>
+        <path d="M5 10.5a7 7 0 0 0 14 0" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        <path d="M12 17.5v3.5M8.5 21h7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <p class="home-hint">Say where it goes, then your note.<br>Like: <em>"East of Eden, part one — this passage hit hard."</em></p>
+    <p class="home-subhint">Or create something new: <em>"New list — To-do: buy milk"</em></p>
+    <div class="home-saved" id="home-saved">Saved ✓</div>
+  </div>
+
   <div class="main-header">
     <div class="breadcrumb" id="breadcrumb">Welcome</div>
     <div class="current-title" id="current-title">Ready</div>
@@ -669,7 +869,11 @@
 
   <div class="mic-bar">
     <button class="mic-bar-btn" id="mic-btn" aria-label="Hold to talk">
-      <span class="mic-bar-icon">🎙</span>
+      <svg class="mic-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="9" y="2.5" width="6" height="11" rx="3" fill="currentColor"/>
+        <path d="M5 10.5a7 7 0 0 0 14 0" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        <path d="M12 17.5v3.5M8.5 21h7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+      </svg>
       <span id="mic-bar-label">Hold to talk</span>
     </button>
   </div>
@@ -690,13 +894,17 @@
 <script>
   // ============ STATE ============
   let state = {
-    books: [],           // [{ id, title, chapters: [{ id, title }], expanded: false }]
-    notes: [],           // [{ id, bookId, chapterId|null, text, createdAt }]
+    books: [],
+    lists: [],           // [{ id, title }]
+    notes: [],
+    screen: 'home',      // 'home' | 'browse'
     selectedBookId: null,
     selectedChapterId: null,
+    selectedListId: null,
   };
 
   const STORAGE_KEY = 'blurt-v1';
+  const THEME_KEY = 'blurt-theme';
   const MISC_ID = '__misc__';
 
   function load() {
@@ -705,6 +913,8 @@
       if (raw) {
         const parsed = JSON.parse(raw);
         state = { ...state, ...parsed };
+        if (!state.lists) state.lists = [];
+        if (!state.screen) state.screen = 'home';
       }
     } catch (e) { console.error('load failed', e); }
   }
@@ -717,11 +927,16 @@
 
   // ============ AUTO-ROUTE (display helpers) ============
   function isMiscNote(note) {
+    if (note.listId) return false;
     return note.bookId === MISC_ID || note.bookId == null ||
       !state.books.some(b => b.id === note.bookId);
   }
 
   function getNoteLocation(note) {
+    if (note.listId) {
+      const list = state.lists.find(l => l.id === note.listId);
+      return list ? list.title : 'List';
+    }
     if (isMiscNote(note)) return 'Miscellaneous';
     const book = state.books.find(b => b.id === note.bookId);
     if (!book) return 'Miscellaneous';
@@ -730,6 +945,53 @@
       return ch ? `${book.title} · ${ch.title}` : book.title;
     }
     return book.title;
+  }
+
+  function goHome() {
+    state.screen = 'home';
+    state.selectedBookId = null;
+    state.selectedChapterId = null;
+    state.selectedListId = null;
+    save();
+    renderAll();
+  }
+
+  function goBrowse() {
+    state.screen = 'browse';
+    save();
+  }
+
+  function applyRouteCreations(route) {
+    if (route.createBookTitle) {
+      const book = { id: uid(), title: route.createBookTitle.trim(), chapters: [], expanded: true };
+      if (route.createChapterTitle) {
+        book.chapters.push({ id: uid(), title: route.createChapterTitle.trim() });
+      }
+      state.books.push(book);
+      route.destinationBookId = book.id;
+      route.destinationChapterId = route.createChapterTitle ? book.chapters[0].id : null;
+      route.destinationListId = null;
+    }
+    if (route.createListTitle) {
+      const list = { id: uid(), title: route.createListTitle.trim() };
+      state.lists.push(list);
+      route.destinationListId = list.id;
+      route.destinationBookId = null;
+      route.destinationChapterId = null;
+    }
+  }
+
+  function updateLayout() {
+    const main = document.getElementById('main');
+    main.classList.toggle('home-mode', state.screen === 'home');
+    main.classList.toggle('browse-mode', state.screen === 'browse');
+  }
+
+  function showHomeSaved() {
+    const el = document.getElementById('home-saved');
+    el.classList.add('visible');
+    clearTimeout(showHomeSaved._t);
+    showHomeSaved._t = setTimeout(() => el.classList.remove('visible'), 2200);
   }
 
   let toastTimer = null;
@@ -755,6 +1017,8 @@
         book.expanded = !book.expanded;
         state.selectedBookId = book.id;
         state.selectedChapterId = null;
+        state.selectedListId = null;
+        goBrowse();
         save();
         renderAll();
       });
@@ -771,6 +1035,8 @@
             e.stopPropagation();
             state.selectedBookId = book.id;
             state.selectedChapterId = chap.id;
+            state.selectedListId = null;
+            goBrowse();
             save();
             renderAll();
           });
@@ -797,7 +1063,25 @@
     const miscCount = state.notes.filter(isMiscNote).length;
     document.getElementById('misc-count').textContent = miscCount;
     document.getElementById('misc-item').className =
-      'misc-item' + (state.selectedBookId === MISC_ID ? ' selected' : '');
+      'misc-item' + (state.selectedBookId === MISC_ID && state.screen === 'browse' ? ' selected' : '');
+
+    const listContainer = document.getElementById('list-items');
+    listContainer.innerHTML = '';
+    state.lists.forEach(list => {
+      const count = state.notes.filter(n => n.listId === list.id).length;
+      const el = document.createElement('div');
+      el.className = 'list-item' + (state.selectedListId === list.id && state.screen === 'browse' ? ' selected' : '');
+      el.innerHTML = `${escapeHtml(list.title)}${count ? ` <span class="misc-count">${count}</span>` : ''}`;
+      el.addEventListener('click', () => {
+        state.selectedListId = list.id;
+        state.selectedBookId = null;
+        state.selectedChapterId = null;
+        goBrowse();
+        save();
+        renderAll();
+      });
+      listContainer.appendChild(el);
+    });
   }
 
   function renderNoteCard(note, showRoute) {
@@ -834,15 +1118,38 @@
   }
 
   function renderMain() {
+    if (state.screen === 'home') return;
+
+    if (!state.selectedListId && !state.selectedBookId) {
+      goHome();
+      return;
+    }
+
     const breadcrumb = document.getElementById('breadcrumb');
     const title = document.getElementById('current-title');
     const meta = document.getElementById('current-meta');
     const notesArea = document.getElementById('notes-area');
 
+    if (state.selectedListId) {
+      const list = state.lists.find(l => l.id === state.selectedListId);
+      breadcrumb.textContent = 'Lists';
+      title.textContent = list ? list.title : 'List';
+      meta.textContent = 'Hold the bar below to add to this list';
+      const listNotes = state.notes.filter(n => n.listId === state.selectedListId)
+        .sort((a, b) => b.createdAt - a.createdAt);
+      if (listNotes.length === 0) {
+        notesArea.innerHTML = `<div class="empty-state"><div class="icon">📝</div><p>No notes yet. Hold the bar below and speak.</p></div>`;
+        return;
+      }
+      notesArea.innerHTML = '';
+      listNotes.forEach(note => notesArea.appendChild(renderNoteCard(note, false)));
+      return;
+    }
+
     if (state.selectedBookId === MISC_ID) {
       breadcrumb.textContent = 'Inbox';
       title.textContent = 'Miscellaneous';
-      meta.textContent = 'Couldn\'t match a book — move these when you\'re ready';
+      meta.textContent = 'Unsorted — move these when you\'re ready';
       const miscNotes = state.notes.filter(isMiscNote).sort((a, b) => b.createdAt - a.createdAt);
       if (miscNotes.length === 0) {
         notesArea.innerHTML = `<div class="empty-state"><div class="icon">📥</div><p>No unsorted notes. When we can't match what you say to a book, it lands here.</p></div>`;
@@ -856,16 +1163,7 @@
     const book = state.books.find(b => b.id === state.selectedBookId);
 
     if (!book) {
-      breadcrumb.textContent = 'Blurt';
-      title.textContent = 'Ready';
-      meta.textContent = 'Hold the bar below and speak — mention a book or chapter to auto-file';
-      const recent = [...state.notes].sort((a, b) => b.createdAt - a.createdAt).slice(0, 40);
-      if (recent.length === 0) {
-        notesArea.innerHTML = `<div class="empty-state"><div class="icon">📖</div><p>Hold the bar at the bottom and speak. Say a book or chapter name and we'll sort it automatically.</p></div>`;
-        return;
-      }
-      notesArea.innerHTML = '';
-      recent.forEach(note => notesArea.appendChild(renderNoteCard(note, true)));
+      goHome();
       return;
     }
 
@@ -882,12 +1180,13 @@
     }
 
     const relevantNotes = state.notes.filter(n => {
+      if (n.listId) return false;
       if (chapter) return n.chapterId === chapter.id;
       return n.bookId === book.id && !n.chapterId;
     }).sort((a, b) => b.createdAt - a.createdAt);
 
     if (relevantNotes.length === 0) {
-      notesArea.innerHTML = `<div class="empty-state"><div class="icon">🎙</div><p>Hold the bar below and speak — mention this book or chapter to file here.</p></div>`;
+      notesArea.innerHTML = `<div class="empty-state"><div class="icon"><svg class="mic-icon" style="width:48px;height:48px;margin:0 auto;opacity:0.35;color:var(--text-faint)" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11" rx="3" fill="currentColor"/><path d="M5 10.5a7 7 0 0 0 14 0" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/><path d="M12 17.5v3.5M8.5 21h7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg></div><p>Hold the bar below and speak — mention this book or chapter to file here.</p></div>`;
       return;
     }
 
@@ -914,6 +1213,7 @@
 
   function renderAll() {
     renderSidebar();
+    updateLayout();
     renderMain();
     if (window.matchMedia('(max-width: 599px)').matches) closeSidebar();
   }
@@ -926,11 +1226,14 @@
   let modalCallback = null;
 
   function buildDestinations() {
-    const dests = [{ bookId: MISC_ID, chapterId: null, label: 'Miscellaneous' }];
+    const dests = [{ bookId: MISC_ID, chapterId: null, listId: null, label: 'Miscellaneous' }];
+    state.lists.forEach(l => {
+      dests.push({ bookId: null, chapterId: null, listId: l.id, label: l.title });
+    });
     state.books.forEach(b => {
-      dests.push({ bookId: b.id, chapterId: null, label: b.title });
+      dests.push({ bookId: b.id, chapterId: null, listId: null, label: b.title });
       b.chapters.forEach(c => {
-        dests.push({ bookId: b.id, chapterId: c.id, label: `${b.title} → ${c.title}` });
+        dests.push({ bookId: b.id, chapterId: c.id, listId: null, label: `${b.title} → ${c.title}` });
       });
     });
     return dests;
@@ -962,6 +1265,7 @@
       const picked = destinations[parseInt(dest.value, 10)];
       note.bookId = picked.bookId;
       note.chapterId = picked.chapterId;
+      note.listId = picked.listId;
       save();
       renderAll();
       showRouteToast(`Moved to ${picked.label}`);
@@ -1005,9 +1309,29 @@
   document.getElementById('misc-item').addEventListener('click', () => {
     state.selectedBookId = MISC_ID;
     state.selectedChapterId = null;
+    state.selectedListId = null;
+    goBrowse();
     save();
     renderAll();
   });
+
+  document.getElementById('add-list-btn').addEventListener('click', () => {
+    openModal('Add list', '', (val) => {
+      if (val.trim()) {
+        state.lists.push({ id: uid(), title: val.trim() });
+        save();
+        renderAll();
+      }
+    });
+  });
+
+  document.getElementById('lists-header').addEventListener('click', function() {
+    this.classList.toggle('collapsed');
+    document.getElementById('list-items').style.display = this.classList.contains('collapsed') ? 'none' : '';
+    document.getElementById('add-list-btn').style.display = this.classList.contains('collapsed') ? 'none' : '';
+  });
+
+  document.querySelector('.sidebar-header').addEventListener('click', goHome);
 
   document.getElementById('misc-header').addEventListener('click', function() {
     this.classList.toggle('collapsed');
@@ -1069,10 +1393,12 @@
   }
 
   function saveNoteFromRoute(route) {
+    applyRouteCreations(route);
     const note = {
       id: uid(),
-      bookId: route.destinationBookId || MISC_ID,
-      chapterId: route.destinationChapterId || null,
+      bookId: route.destinationListId ? null : (route.destinationBookId || MISC_ID),
+      chapterId: route.destinationListId ? null : (route.destinationChapterId || null),
+      listId: route.destinationListId || null,
       text: route.noteText.trim(),
       routingConfidence: route.confidence || 'low',
       createdAt: Date.now(),
@@ -1080,8 +1406,15 @@
     if (!note.text) return;
     state.notes.push(note);
     save();
-    showRouteToast('Saved to ' + getNoteLocation(note));
-    renderAll();
+    const loc = getNoteLocation(note);
+    if (state.screen === 'home') {
+      showHomeSaved();
+      showRouteToast('Saved to ' + loc);
+      renderSidebar();
+    } else {
+      showRouteToast('Saved to ' + loc);
+      renderAll();
+    }
   }
 
   async function processRecording(blob) {
@@ -1115,9 +1448,19 @@
 
       showRecordingIndicator('Transcribing…', escapeHtml(transcript.trim()));
 
-      const defaultBookId = (state.selectedBookId && state.selectedBookId !== MISC_ID)
-        ? state.selectedBookId
-        : MISC_ID;
+      let defaultBookId = MISC_ID;
+      let defaultChapterId = null;
+      let defaultListId = null;
+
+      if (state.screen === 'browse') {
+        if (state.selectedListId) {
+          defaultListId = state.selectedListId;
+          defaultBookId = null;
+        } else if (state.selectedBookId && state.selectedBookId !== MISC_ID) {
+          defaultBookId = state.selectedBookId;
+          defaultChapterId = state.selectedChapterId || null;
+        }
+      }
 
       const routeRes = await fetch('/api/route', {
         method: 'POST',
@@ -1125,8 +1468,10 @@
         body: JSON.stringify({
           transcript: transcript.trim(),
           books: state.books,
+          lists: state.lists,
           defaultBookId,
-          defaultChapterId: state.selectedChapterId || null,
+          defaultChapterId,
+          defaultListId,
         }),
       });
       if (!routeRes.ok) throw new Error(await getErrorMessage(routeRes));
@@ -1149,11 +1494,20 @@
       });
     } finally {
       isProcessing = false;
-      micBtn.disabled = false;
+      resetMicButtons();
     }
   }
 
-  async function startRecording() {
+  const homeMicBtn = document.getElementById('home-mic-btn');
+  let activeMic = null;
+
+  function resetMicButtons() {
+    micBtn.disabled = false;
+    homeMicBtn.disabled = false;
+    micBarLabel.textContent = 'Hold to talk';
+  }
+
+  async function startRecording(micEl, isHome) {
     if (isRecording || isProcessing) return;
 
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -1166,6 +1520,7 @@
         mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
       }
 
+      activeMic = micEl;
       audioChunks = [];
       const mimeType = pickMimeType();
       mediaRecorder = new MediaRecorder(mediaStream, mimeType ? { mimeType } : undefined);
@@ -1181,9 +1536,10 @@
 
       mediaRecorder.start(250);
       isRecording = true;
-      micBtn.classList.add('recording');
-      micBarLabel.textContent = 'Listening…';
-      showRecordingIndicator('Listening', '…');
+      micEl.classList.add('recording');
+      if (isHome) micEl.classList.add('pop');
+      if (!isHome) micBarLabel.textContent = 'Listening…';
+      showRecordingIndicator(isHome ? 'Listening…' : 'Listening', '…');
     } catch (err) {
       console.error('startRecording:', err);
       alert('Microphone permission denied. Please allow it in your browser settings.');
@@ -1193,36 +1549,65 @@
   function stopRecording() {
     if (!isRecording || !mediaRecorder) return;
     isRecording = false;
-    micBtn.classList.remove('recording');
-    micBarLabel.textContent = 'Hold to talk';
-    micBtn.disabled = true;
+    if (activeMic) {
+      activeMic.classList.remove('recording', 'pop');
+      activeMic.disabled = true;
+    }
+    if (activeMic !== homeMicBtn) micBarLabel.textContent = 'Hold to talk';
 
     if (mediaRecorder.state !== 'inactive') {
       if (typeof mediaRecorder.requestData === 'function') mediaRecorder.requestData();
       mediaRecorder.stop();
     } else {
-      micBtn.disabled = false;
+      resetMicButtons();
     }
   }
 
-  micBtn.addEventListener('pointerdown', (e) => {
-    e.preventDefault();
-    micBtn.setPointerCapture(e.pointerId);
-    startRecording();
-  });
-  micBtn.addEventListener('pointerup', (e) => {
-    e.preventDefault();
-    if (micBtn.hasPointerCapture(e.pointerId)) micBtn.releasePointerCapture(e.pointerId);
-    stopRecording();
-  });
-  micBtn.addEventListener('pointercancel', () => { if (isRecording) stopRecording(); });
-
-  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
-    micBtn.addEventListener('mouseleave', () => { if (isRecording) stopRecording(); });
+  function bindMic(btn, isHome) {
+    btn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      btn.setPointerCapture(e.pointerId);
+      startRecording(btn, isHome);
+    });
+    btn.addEventListener('pointerup', (e) => {
+      e.preventDefault();
+      if (btn.hasPointerCapture(e.pointerId)) btn.releasePointerCapture(e.pointerId);
+      stopRecording();
+    });
+    btn.addEventListener('pointercancel', () => { if (isRecording) stopRecording(); });
+    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      btn.addEventListener('mouseleave', () => { if (isRecording && activeMic === btn) stopRecording(); });
+    }
   }
+
+  bindMic(homeMicBtn, true);
+  bindMic(micBtn, false);
+
+  function initTheme() {
+    const saved = localStorage.getItem(THEME_KEY) || 'light';
+    setTheme(saved);
+  }
+
+  function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+    document.getElementById('theme-toggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', theme === 'dark' ? '#1a1816' : '#8b5a3c');
+    localStorage.setItem(THEME_KEY, theme);
+  }
+
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    setTheme(isDark ? 'light' : 'dark');
+  });
 
   // ============ INIT ============
   load();
+  initTheme();
+
+  state.screen = 'home';
+  state.selectedBookId = null;
+  state.selectedChapterId = null;
+  state.selectedListId = null;
 
   // Seed with a sample book if empty, so the UI isn't naked
   if (state.books.length === 0) {
