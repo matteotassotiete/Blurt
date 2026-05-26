@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#8b5a3c">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Blurt">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icon.svg">
 <style>
   :root {
@@ -27,6 +27,9 @@
     --canvas: #ffffff;
     --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
     --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --top-bar-inner: 52px;
+    --top-bar-total: calc(var(--safe-top) + var(--top-bar-inner));
   }
 
   [data-theme="dark"] {
@@ -53,6 +56,7 @@
     background: var(--bg);
     color: var(--text);
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
     display: flex;
   }
@@ -68,7 +72,7 @@
   }
 
   .sidebar-header {
-    padding: calc(24px + env(safe-area-inset-top, 0px)) 20px 16px;
+    padding: calc(20px + var(--safe-top)) 20px 16px;
     border-bottom: 1px solid var(--border);
     cursor: pointer;
   }
@@ -203,6 +207,11 @@
     flex-direction: column;
     overflow: hidden;
     position: relative;
+    min-height: 0;
+  }
+
+  .main.browse-mode {
+    padding-top: var(--top-bar-total);
   }
 
   .main-header {
@@ -267,7 +276,7 @@
     position: relative;
     margin-top: 1.75em;
     padding-left: 1.5em;
-    padding-right: 2rem;
+    padding-right: 2.75rem;
     transition: background 0.12s, box-shadow 0.12s;
   }
 
@@ -389,8 +398,15 @@
     margin: 0;
     white-space: pre-wrap;
     word-break: break-word;
+    overflow-wrap: anywhere;
     user-select: text;
     -webkit-user-select: text;
+    min-width: 0;
+  }
+
+  .todo-item .note-text {
+    flex: 1;
+    min-width: 0;
   }
 
   .todo-item {
@@ -589,25 +605,24 @@
   }
 
   .route-toast {
-    position: absolute;
-    top: calc(16px + env(safe-area-inset-top, 0px));
+    position: fixed;
+    top: calc(var(--top-bar-total, 52px) + 10px);
     left: 50%;
     transform: translateX(-50%) translateY(-8px);
     background: var(--text);
     color: var(--bg);
     font-size: 13px;
+    line-height: 1.35;
     padding: 10px 16px;
     border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.25s, transform 0.25s;
-    z-index: 60;
-    max-width: calc(100% - 32px);
+    z-index: 105;
+    max-width: min(340px, calc(100vw - 32px));
     text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
   }
 
   .route-toast.visible {
@@ -615,19 +630,211 @@
     transform: translateX(-50%) translateY(0);
   }
 
+  .clarification-bubble {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    max-width: min(340px, calc(100vw - 32px));
+    padding: 14px 36px 14px 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--text);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 90;
+    text-align: center;
+  }
+
+  .main.home-mode .clarification-bubble {
+    top: calc(58% + var(--top-bar-total, 52px));
+    bottom: auto;
+  }
+
+  .main.browse-mode .clarification-bubble {
+    bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+    top: auto;
+  }
+
+  .clarification-bubble.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+  }
+
+  .clarification-bubble-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-faint);
+    margin-bottom: 6px;
+  }
+
+  .clarification-dismiss {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-faint);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .clarification-dismiss:hover {
+    background: var(--hover-bg);
+    color: var(--text);
+  }
+
+  .thinking-indicator {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    padding: 8px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 13px;
+    font-style: italic;
+    color: var(--text-muted);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+    z-index: 85;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
+
+  .main.home-mode .thinking-indicator {
+    top: calc(52% + var(--top-bar-total, 52px));
+    bottom: auto;
+  }
+
+  .main.browse-mode .thinking-indicator {
+    bottom: calc(108px + env(safe-area-inset-bottom, 0px));
+    top: auto;
+  }
+
+  .thinking-indicator.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .undo-btn {
+    display: none;
+  }
+
+  .activity-log {
+    position: absolute;
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    left: 20px;
+    right: 20px;
+    max-height: 112px;
+    overflow-y: auto;
+    z-index: 2;
+    pointer-events: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .activity-log:empty {
+    display: none;
+  }
+
+  .home-canvas.active .activity-log {
+    opacity: 0.25;
+    pointer-events: none;
+  }
+
+  .activity-log-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: var(--text-faint);
+    margin-bottom: 4px;
+  }
+
+  .activity-log-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    padding: 7px 0;
+    cursor: pointer;
+    font-family: var(--sans);
+  }
+
+  .activity-log-item:last-child {
+    border-bottom: none;
+  }
+
+  .activity-log-loc {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent);
+    margin-bottom: 2px;
+  }
+
+  .activity-log-preview {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .activity-log-time {
+    display: block;
+    font-size: 10px;
+    color: var(--text-faint);
+    margin-top: 2px;
+  }
+
+  .sidebar-node.sidebar-flash {
+    animation: sidebarFlash 1s ease;
+  }
+
+  @keyframes sidebarFlash {
+    0%, 100% { background: transparent; }
+    20%, 55% { background: var(--selected-bg); }
+  }
+
   /* ============ TOP BAR ============ */
   .top-bar {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px;
-    z-index: 50;
+    min-height: var(--top-bar-total);
+    padding: var(--safe-top) 16px 10px;
+    background: var(--bg);
+    z-index: 100;
     pointer-events: none;
     gap: 12px;
+    box-sizing: border-box;
+  }
+
+  .main.browse-mode .top-bar {
+    border-bottom: 1px solid var(--border);
   }
 
   .top-bar-left {
@@ -671,8 +878,14 @@
   }
 
   .breadcrumb-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     margin-bottom: 6px;
   }
+
+  .breadcrumb-row .breadcrumb { margin-bottom: 0; }
 
   .top-bar > * { pointer-events: auto; }
 
@@ -711,7 +924,8 @@
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    padding-top: env(safe-area-inset-top, 0px);
+    padding-top: var(--top-bar-total);
+    box-sizing: border-box;
   }
 
   .home-canvas .orb {
@@ -993,17 +1207,25 @@
 
   .sidebar-overlay.active { display: block; }
 
-  @media (max-width: 599px) {
-    .menu-btn { display: flex; }
+  @media (min-width: 600px) {
+    .top-bar {
+      position: absolute;
+    }
+  }
 
-    .top-bar { padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px; }
+  @media (max-width: 599px) {
+    :root {
+      --safe-top: max(env(safe-area-inset-top, 0px), 47px);
+    }
+
+    .menu-btn { display: flex; }
 
     .sidebar {
       position: fixed;
       top: 0;
       left: 0;
       bottom: 0;
-      z-index: 100;
+      z-index: 110;
       transform: translateX(-100%);
       transition: transform 0.25s ease;
       box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
@@ -1012,7 +1234,7 @@
     .sidebar.open { transform: translateX(0); }
 
     .main-header {
-      padding: calc(58px + env(safe-area-inset-top, 0px)) 20px 16px;
+      padding: 16px 20px;
     }
 
     .notes-area { padding: 16px 20px 100px; padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
@@ -1089,6 +1311,7 @@
       <span class="orb-recording-dot"></span>listening…
     </div>
     <div class="home-saved" id="home-saved">Saved ✓</div>
+    <div class="activity-log" id="activity-log" aria-label="Recent blurts"></div>
   </div>
 
   <div class="main-header">
@@ -1107,6 +1330,14 @@
   </div>
 
   <div class="route-toast" id="route-toast"></div>
+
+  <div class="thinking-indicator" id="thinking-indicator">thinking…</div>
+
+  <div class="clarification-bubble" id="clarification-bubble" aria-live="polite">
+    <button type="button" class="clarification-dismiss" id="clarification-dismiss" aria-label="Dismiss question">×</button>
+    <span class="clarification-bubble-label">Blurt asks</span>
+    <span id="clarification-text"></span>
+  </div>
 
   <div class="recording-indicator" id="recording-indicator">
     <div class="recording-label">
@@ -1152,6 +1383,7 @@
     selectedChapterId: null,
     selectedListId: null,
     stickyTodoListId: null,
+    activityLog: [],
   };
 
   const STORAGE_KEY = 'blurt-v1';
@@ -1168,6 +1400,7 @@
         state.lists.forEach(l => { if (!l.type) l.type = 'notes'; });
         if (!state.screen) state.screen = 'home';
         if (state.stickyTodoListId === undefined) state.stickyTodoListId = null;
+        if (!state.activityLog) state.activityLog = [];
       }
     } catch (e) { console.error('load failed', e); }
   }
@@ -1215,48 +1448,749 @@
     save();
   }
 
-  function applyRouteCreations(route) {
-    if (route.createBookTitle) {
-      const book = { id: uid(), title: route.createBookTitle.trim(), chapters: [], expanded: true };
-      const chapters = route.createChapterTitles?.length
-        ? route.createChapterTitles
-        : (route.createChapterTitle ? [route.createChapterTitle] : []);
-      chapters.forEach((title) => {
-        book.chapters.push({ id: uid(), title: String(title).trim() });
+  // ============ VOICE ACTION HANDLERS ============
+  let pendingClarification = null;
+  let actionBatchContext = {
+    listId: null,
+    listTitle: null,
+    bookId: null,
+    bookTitle: null,
+    chapterId: null,
+    chapterTitle: null,
+  };
+
+  function logActivity(entry) {
+    if (!state.activityLog) state.activityLog = [];
+    state.activityLog.unshift({
+      id: uid(),
+      at: Date.now(),
+      action: entry.action || 'saved',
+      location: entry.location || '',
+      preview: (entry.preview || '').trim().slice(0, 80),
+      bookId: entry.bookId ?? null,
+      chapterId: entry.chapterId ?? null,
+      listId: entry.listId ?? null,
+    });
+    state.activityLog = state.activityLog.slice(0, 20);
+    renderActivityLog();
+  }
+
+  function navigateToLogEntry(entry) {
+    if (entry.listId) {
+      state.selectedListId = entry.listId;
+      state.selectedBookId = null;
+      state.selectedChapterId = null;
+    } else if (entry.bookId === MISC_ID || (!entry.bookId && !entry.listId)) {
+      state.selectedBookId = MISC_ID;
+      state.selectedChapterId = null;
+      state.selectedListId = null;
+    } else if (entry.chapterId && entry.bookId) {
+      state.selectedBookId = entry.bookId;
+      state.selectedChapterId = entry.chapterId;
+      state.selectedListId = null;
+    } else if (entry.bookId) {
+      state.selectedBookId = entry.bookId;
+      state.selectedChapterId = null;
+      state.selectedListId = null;
+    }
+    goBrowse();
+    save();
+    renderAll();
+  }
+
+  function renderActivityLog() {
+    const el = document.getElementById('activity-log');
+    if (!el) return;
+
+    const items = (state.activityLog || []).slice(0, 5);
+    if (!items.length) {
+      el.innerHTML = '';
+      return;
+    }
+
+    const label = '<div class="activity-log-label">Recent</div>';
+    const rows = items.map((entry) => {
+      const time = new Date(entry.at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+      const preview = entry.preview ? escapeHtml(entry.preview) : escapeHtml(entry.action === 'created' ? 'New' : '—');
+      return `<button type="button" class="activity-log-item" data-log-id="${entry.id}">
+        <span class="activity-log-loc">${escapeHtml(entry.location)}</span>
+        <span class="activity-log-preview">${preview}</span>
+        <span class="activity-log-time">${time}</span>
+      </button>`;
+    }).join('');
+
+    el.innerHTML = label + rows;
+    el.querySelectorAll('.activity-log-item').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const entry = state.activityLog.find((e) => e.id === btn.dataset.logId);
+        if (entry) navigateToLogEntry(entry);
       });
-      state.books.push(book);
-      route.destinationBookId = book.id;
-      route.destinationChapterId = book.chapters.length === 1 ? book.chapters[0].id : null;
-      route.destinationListId = null;
-    } else if (route.createChapterTitles?.length && route.destinationBookId) {
-      const book = state.books.find((b) => b.id === route.destinationBookId);
-      if (book) {
-        route.createChapterTitles.forEach((title) => {
-          book.chapters.push({ id: uid(), title: String(title).trim() });
-        });
-        book.expanded = true;
-        route.destinationChapterId = book.chapters.length === 1 ? book.chapters[0].id : null;
+    });
+  }
+
+  function resetActionBatchContext() {
+    actionBatchContext = {
+      listId: null,
+      listTitle: null,
+      bookId: null,
+      bookTitle: null,
+      chapterId: null,
+      chapterTitle: null,
+    };
+  }
+
+  function normalizeForMatch(str) {
+    return String(str || '').toLowerCase().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function fuzzyMatch(a, b) {
+    const na = normalizeForMatch(a);
+    const nb = normalizeForMatch(b);
+    if (!na || !nb) return false;
+    if (na === nb) return true;
+    if (na.includes(nb) || nb.includes(na)) return true;
+    const wa = na.split(' ');
+    const wb = nb.split(' ');
+    return wa.some((w) => w.length > 2 && wb.some((v) => v === w || v.includes(w) || w.includes(v)));
+  }
+
+  function findBook({ bookId, bookTitle } = {}) {
+    if (bookId) {
+      const byId = state.books.find((b) => b.id === bookId);
+      if (byId) return byId;
+    }
+    if (bookTitle) {
+      return state.books.find((b) => fuzzyMatch(b.title, bookTitle));
+    }
+    return null;
+  }
+
+  function findChapter(book, { chapterId, chapterTitle } = {}) {
+    if (!book) return null;
+    if (chapterId) {
+      const byId = book.chapters.find((c) => c.id === chapterId);
+      if (byId) return byId;
+    }
+    if (chapterTitle) {
+      return book.chapters.find((c) => fuzzyMatch(c.title, chapterTitle));
+    }
+    return null;
+  }
+
+  function findChapterById(chapterId) {
+    for (const book of state.books) {
+      const chapter = book.chapters.find((c) => c.id === chapterId);
+      if (chapter) return { book, chapter };
+    }
+    return null;
+  }
+
+  function findListByTitle(listTitle) {
+    if (!listTitle) return null;
+    const target = normalizeForMatch(listTitle);
+    const exact = state.lists.find((l) => normalizeForMatch(l.title) === target);
+    if (exact) return exact;
+    return state.lists.find((l) => fuzzyMatch(l.title, listTitle)) || null;
+  }
+
+  function findList({ listId, listTitle } = {}) {
+    if (listId) {
+      const byId = state.lists.find((l) => l.id === listId);
+      if (byId) return byId;
+    }
+    if (listTitle) return findListByTitle(listTitle);
+    return null;
+  }
+
+  function resolveListForItem({ listId, listTitle } = {}) {
+    if (listId) {
+      const byId = state.lists.find((l) => l.id === listId);
+      if (byId) return byId;
+    }
+    if (listTitle) {
+      const byTitle = findListByTitle(listTitle);
+      if (byTitle) return byTitle;
+    }
+    if (actionBatchContext.listId) {
+      const batchList = state.lists.find((l) => l.id === actionBatchContext.listId);
+      if (batchList) return batchList;
+    }
+    if (state.screen === 'browse' && state.selectedListId) {
+      const selected = state.lists.find((l) => l.id === state.selectedListId);
+      if (selected) return selected;
+    }
+    if (state.stickyTodoListId) {
+      return state.lists.find((l) => l.id === state.stickyTodoListId) || null;
+    }
+    return null;
+  }
+
+  function findListItem(list, { itemId, itemText } = {}) {
+    if (!list) return null;
+    const items = state.notes.filter((n) => n.listId === list.id);
+    if (itemId) {
+      const byId = items.find((n) => n.id === itemId);
+      if (byId) return byId;
+    }
+    if (itemText) {
+      const exact = items.find((n) => fuzzyMatch(n.text, itemText));
+      if (exact) return exact;
+      return items.find((n) => normalizeForMatch(n.text).includes(normalizeForMatch(itemText))
+        || normalizeForMatch(itemText).includes(normalizeForMatch(n.text)));
+    }
+    return null;
+  }
+
+  function resolveDestination(dest) {
+    const d = dest || {};
+    let kind = d.kind;
+
+    if (!kind && state.screen === 'browse') {
+      if (state.selectedListId) kind = 'list';
+      else if (state.selectedChapterId) kind = 'chapter';
+      else if (state.selectedBookId && state.selectedBookId !== MISC_ID) kind = 'book';
+    }
+    if (!kind) kind = 'misc';
+
+    if (kind === 'misc') {
+      return { bookId: MISC_ID, chapterId: null, listId: null };
+    }
+
+    if (kind === 'list') {
+      const list = resolveListForItem({ listId: d.listId, listTitle: d.listTitle });
+      if (!list) {
+        console.warn('addNote: list not found', d);
+        return null;
       }
-    } else if (route.createChapterTitle && route.destinationBookId) {
-      const book = state.books.find((b) => b.id === route.destinationBookId);
-      if (book) {
-        const ch = { id: uid(), title: route.createChapterTitle.trim() };
-        book.chapters.push(ch);
-        book.expanded = true;
-        route.destinationChapterId = ch.id;
+      return { bookId: null, chapterId: null, listId: list.id };
+    }
+
+    const book = findBook({
+      bookId: d.bookId || actionBatchContext.bookId
+        || (state.selectedBookId && state.selectedBookId !== MISC_ID ? state.selectedBookId : null),
+      bookTitle: d.bookTitle || actionBatchContext.bookTitle,
+    });
+
+    if (kind === 'book') {
+      if (!book) {
+        console.warn('addNote: book not found', d);
+        return null;
+      }
+      return { bookId: book.id, chapterId: null, listId: null };
+    }
+
+    if (kind === 'chapter') {
+      if (!book) {
+        console.warn('addNote: book not found for chapter', d);
+        return null;
+      }
+      const chapter = findChapter(book, {
+        chapterId: d.chapterId || actionBatchContext.chapterId || state.selectedChapterId,
+        chapterTitle: d.chapterTitle || actionBatchContext.chapterTitle,
+      });
+      if (!chapter) {
+        console.warn('addNote: chapter not found', d);
+        return null;
+      }
+      return { bookId: book.id, chapterId: chapter.id, listId: null };
+    }
+
+    console.warn('addNote: unknown destination kind', kind);
+    return null;
+  }
+
+  function sanitizeFormatting(formatting, textLength) {
+    if (!Array.isArray(formatting)) return [];
+    return formatting.filter((f) => f && typeof f.start === 'number' && typeof f.end === 'number'
+      && f.end > f.start && f.start >= 0 && f.end <= textLength
+      && (f.type === 'bold' || f.type === 'italic'));
+  }
+
+  function normalizeFormattingRanges(formatting, textLength) {
+    const valid = sanitizeFormatting(formatting, textLength);
+    valid.sort((a, b) => a.start - b.start || a.end - b.end);
+    const nonOverlapping = [];
+    let lastEnd = 0;
+    for (const f of valid) {
+      if (f.start >= lastEnd) {
+        nonOverlapping.push(f);
+        lastEnd = f.end;
       }
     }
-    if (route.createListTitle) {
-      const list = {
-        id: uid(),
-        title: route.createListTitle.trim(),
-        type: route.createListType === 'todo' ? 'todo' : 'notes',
+    return nonOverlapping;
+  }
+
+  function rangesForSlice(ranges, sliceStart, sliceEnd) {
+    return ranges
+      .filter((f) => f.end > sliceStart && f.start < sliceEnd)
+      .map((f) => ({
+        start: Math.max(0, f.start - sliceStart),
+        end: Math.min(sliceEnd - sliceStart, f.end - sliceStart),
+        type: f.type,
+      }))
+      .filter((f) => f.end > f.start);
+  }
+
+  function renderFormattedText(text, formatting) {
+    if (!text) return '';
+    const ranges = normalizeFormattingRanges(formatting, text.length);
+    if (!ranges.length) return escapeHtml(text);
+
+    let html = '';
+    let pos = 0;
+    for (const f of ranges) {
+      if (f.start > pos) html += escapeHtml(text.slice(pos, f.start));
+      const inner = escapeHtml(text.slice(f.start, f.end));
+      html += f.type === 'bold' ? `<strong>${inner}</strong>` : `<em>${inner}</em>`;
+      pos = f.end;
+    }
+    if (pos < text.length) html += escapeHtml(text.slice(pos));
+    return html;
+  }
+
+  function buildRouteState() {
+    const routingMode = state.screen === 'home' ? 'home' : 'context';
+    let categoryId = null;
+    let itemId = null;
+    let subItemId = null;
+    let itemTitle = null;
+    let subItemTitle = null;
+
+    if (state.screen === 'browse') {
+      if (state.selectedListId) {
+        categoryId = 'lists';
+        itemId = state.selectedListId;
+        itemTitle = state.lists.find((l) => l.id === state.selectedListId)?.title || null;
+      } else if (state.selectedBookId === MISC_ID) {
+        categoryId = 'misc';
+        itemId = MISC_ID;
+      } else if (state.selectedBookId) {
+        categoryId = 'books';
+        itemId = state.selectedBookId;
+        subItemId = state.selectedChapterId || null;
+        const book = state.books.find((b) => b.id === state.selectedBookId);
+        itemTitle = book?.title || null;
+        if (subItemId && book) {
+          subItemTitle = book.chapters.find((c) => c.id === subItemId)?.title || null;
+        }
+      }
+    }
+
+    return {
+      books: state.books.map((b) => ({
+        id: b.id,
+        title: b.title,
+        chapters: (b.chapters || []).map((c) => ({ id: c.id, title: c.title })),
+      })),
+      lists: state.lists.map((l) => ({
+        id: l.id,
+        title: l.title,
+        type: l.type || 'notes',
+        items: state.notes
+          .filter((n) => n.listId === l.id)
+          .map((n) => ({ id: n.id, text: n.text, checked: !!n.checked })),
+      })),
+      misc: state.notes
+        .filter(isMiscNote)
+        .slice(-20)
+        .map((n) => ({ id: n.id, text: n.text })),
+      recentNotes: state.notes.slice(-15).map((n) => ({
+        id: n.id,
+        text: n.text,
+        formatting: n.formatting || [],
+        bookId: n.bookId,
+        chapterId: n.chapterId,
+        listId: n.listId,
+      })),
+      currentSelection: { categoryId, itemId, subItemId, itemTitle, subItemTitle },
+      routingMode,
+      stickyTodoListId: state.stickyTodoListId,
+    };
+  }
+
+  function handleCreateBook(title) {
+    const name = String(title || '').trim();
+    if (!name) {
+      console.warn('createBook: missing title');
+      return null;
+    }
+    const book = { id: uid(), title: name, chapters: [], expanded: true };
+    state.books.push(book);
+    actionBatchContext.bookId = book.id;
+    actionBatchContext.bookTitle = book.title;
+    actionBatchContext.chapterId = null;
+    actionBatchContext.chapterTitle = null;
+    logActivity({ action: 'created', location: name, preview: 'New book' });
+    return { message: `Created book: ${name}`, flash: { kind: 'book', id: book.id } };
+  }
+
+  function handleCreateChapter({ bookTitle, bookId, chapterTitle }) {
+    const name = String(chapterTitle || '').trim();
+    if (!name) {
+      console.warn('createChapter: missing chapter title');
+      return null;
+    }
+    const book = findBook({
+      bookId: bookId || actionBatchContext.bookId
+        || (state.selectedBookId && state.selectedBookId !== MISC_ID ? state.selectedBookId : null),
+      bookTitle: bookTitle || actionBatchContext.bookTitle,
+    });
+    if (!book) {
+      console.warn('createChapter: book not found', { bookTitle, bookId });
+      return null;
+    }
+    const chapter = { id: uid(), title: name };
+    book.chapters.push(chapter);
+    book.expanded = true;
+    actionBatchContext.bookId = book.id;
+    actionBatchContext.bookTitle = book.title;
+    actionBatchContext.chapterId = chapter.id;
+    actionBatchContext.chapterTitle = chapter.title;
+    logActivity({
+      action: 'created',
+      location: `${book.title} · ${name}`,
+      preview: 'New chapter',
+      bookId: book.id,
+      chapterId: chapter.id,
+    });
+    return { message: `Added chapter: ${name}`, flash: { kind: 'chapter', id: chapter.id } };
+  }
+
+  function handleCreateList({ title, listType }) {
+    const name = String(title || '').trim();
+    if (!name) {
+      console.warn('createList: missing title');
+      return null;
+    }
+    const type = listType === 'todo' ? 'todo' : 'notes';
+    const list = { id: uid(), title: name, type };
+    state.lists.push(list);
+    actionBatchContext.listId = list.id;
+    actionBatchContext.listTitle = list.title;
+    if (type === 'todo') state.stickyTodoListId = list.id;
+    const suffix = type === 'todo' ? ' — checkbox mode on' : '';
+    logActivity({ action: 'created', location: name, preview: type === 'todo' ? 'To-do list' : 'List', listId: list.id });
+    return { message: `Created list: ${name}${suffix}`, flash: { kind: 'list', id: list.id } };
+  }
+
+  function handleAddListItem({ listTitle, listId, text }) {
+    const itemText = String(text || '').trim();
+    if (!itemText) {
+      console.warn('addListItem: missing text');
+      return null;
+    }
+    const list = resolveListForItem({ listId, listTitle });
+    if (!list) {
+      console.warn('addListItem: list not found', { listTitle, listId });
+      return null;
+    }
+    const note = {
+      id: uid(),
+      bookId: null,
+      chapterId: null,
+      listId: list.id,
+      text: itemText,
+      checked: false,
+      createdAt: Date.now(),
+    };
+    state.notes.push(note);
+    if (list.type === 'todo') state.stickyTodoListId = list.id;
+    logActivity({ action: 'added', location: list.title, preview: itemText, listId: list.id });
+    return { message: `Added to ${list.title}` };
+  }
+
+  function handleToggleListItem({ listTitle, listId, itemText, itemId }) {
+    const list = resolveListForItem({ listId, listTitle });
+    if (!list) {
+      console.warn('toggleListItem: list not found', { listTitle, listId });
+      return null;
+    }
+    const item = findListItem(list, { itemId, itemText });
+    if (!item) {
+      console.warn('toggleListItem: item not found', { itemText, itemId });
+      return null;
+    }
+    item.checked = !item.checked;
+    return { message: item.checked ? `Checked off: ${item.text}` : `Unchecked: ${item.text}` };
+  }
+
+  function handleAddNote({ destination, text, formatting }) {
+    const noteText = String(text || '').trim();
+    if (!noteText) {
+      console.warn('addNote: missing text');
+      return null;
+    }
+    const resolved = resolveDestination(destination);
+    if (!resolved) return null;
+
+    if (resolved.listId) {
+      return handleAddListItem({ listId: resolved.listId, text: noteText });
+    }
+
+    const note = {
+      id: uid(),
+      bookId: resolved.listId ? null : (resolved.bookId || MISC_ID),
+      chapterId: resolved.listId ? null : (resolved.chapterId || null),
+      listId: resolved.listId || null,
+      text: noteText,
+      checked: false,
+      createdAt: Date.now(),
+    };
+    const fmt = sanitizeFormatting(formatting, noteText.length);
+    if (fmt.length) note.formatting = fmt;
+
+    state.notes.push(note);
+    const list = resolved.listId ? state.lists.find((l) => l.id === resolved.listId) : null;
+    if (list?.type === 'todo') state.stickyTodoListId = list.id;
+    const location = getNoteLocation(note);
+    logActivity({
+      action: 'saved',
+      location,
+      preview: noteText,
+      bookId: note.bookId,
+      chapterId: note.chapterId,
+      listId: note.listId,
+    });
+    return { message: `Saved to ${location}` };
+  }
+
+  function handleEditNote({ noteId, newText, formatting }) {
+    const note = state.notes.find((n) => n.id === noteId);
+    if (!note) {
+      console.warn('editNote: note not found', noteId);
+      return null;
+    }
+    if (newText != null && String(newText).trim()) {
+      note.text = String(newText).trim();
+    }
+    const len = note.text.length;
+    if (Array.isArray(formatting) && formatting.length) {
+      note.formatting = sanitizeFormatting(formatting, len);
+    } else if (Array.isArray(formatting)) {
+      note.formatting = [];
+    }
+    return { message: 'Updated note' };
+  }
+
+  function handleDeleteItem({ kind, id }) {
+    if (!id) {
+      console.warn('deleteItem: missing id');
+      return null;
+    }
+    if (kind === 'book') {
+      if (!state.books.some((b) => b.id === id)) {
+        console.warn('deleteItem: book not found', id);
+        return null;
+      }
+      deleteBook(id);
+      return { message: 'Deleted book' };
+    }
+    if (kind === 'chapter') {
+      const found = findChapterById(id);
+      if (!found) {
+        console.warn('deleteItem: chapter not found', id);
+        return null;
+      }
+      deleteChapter(found.book.id, id);
+      return { message: 'Deleted chapter' };
+    }
+    if (kind === 'list') {
+      if (!state.lists.some((l) => l.id === id)) {
+        console.warn('deleteItem: list not found', id);
+        return null;
+      }
+      deleteList(id);
+      return { message: 'Deleted list' };
+    }
+    if (kind === 'listItem' || kind === 'note') {
+      const note = state.notes.find((n) => n.id === id);
+      if (!note) {
+        console.warn('deleteItem: note not found', id);
+        return null;
+      }
+      state.notes = state.notes.filter((n) => n.id !== id);
+      return { message: 'Deleted note' };
+    }
+    console.warn('deleteItem: unknown kind', kind);
+    return null;
+  }
+
+  function handleRenameItem({ kind, id, newName }) {
+    const name = String(newName || '').trim();
+    if (!name) {
+      console.warn('renameItem: missing new name');
+      return null;
+    }
+    if (kind === 'book') {
+      const book = state.books.find((b) => b.id === id);
+      if (!book) { console.warn('renameItem: book not found', id); return null; }
+      book.title = name;
+      return { message: `Renamed book to ${name}` };
+    }
+    if (kind === 'chapter') {
+      const found = findChapterById(id);
+      if (!found) { console.warn('renameItem: chapter not found', id); return null; }
+      found.chapter.title = name;
+      return { message: `Renamed chapter to ${name}` };
+    }
+    if (kind === 'list') {
+      const list = state.lists.find((l) => l.id === id);
+      if (!list) { console.warn('renameItem: list not found', id); return null; }
+      list.title = name;
+      return { message: `Renamed list to ${name}` };
+    }
+    if (kind === 'note') {
+      const note = state.notes.find((n) => n.id === id);
+      if (!note) { console.warn('renameItem: note not found', id); return null; }
+      note.text = name;
+      return { message: 'Renamed note' };
+    }
+    console.warn('renameItem: unknown kind', kind);
+    return null;
+  }
+
+  function dispatchAction(action) {
+    if (!action || !action.type) return null;
+    switch (action.type) {
+      case 'createBook': return handleCreateBook(action.title);
+      case 'createChapter': return handleCreateChapter(action);
+      case 'createList': return handleCreateList(action);
+      case 'addListItem': return handleAddListItem(action);
+      case 'toggleListItem': return handleToggleListItem(action);
+      case 'addNote': return handleAddNote(action);
+      case 'editNote': return handleEditNote(action);
+      case 'deleteItem': return handleDeleteItem(action);
+      case 'renameItem': return handleRenameItem(action);
+      default:
+        console.warn('Unknown action type', action);
+        return null;
+    }
+  }
+
+  function applyActions(actions) {
+    if (!Array.isArray(actions) || !actions.length) return { messages: [], flashes: [] };
+
+    const wasHome = state.screen === 'home';
+    resetActionBatchContext();
+
+    const messages = [];
+    const flashes = [];
+    let lastCreatedListId = null;
+    let lastCreatedChapter = null;
+
+    for (const action of actions) {
+      const result = dispatchAction(action);
+      if (result?.message) messages.push(result.message);
+      if (result?.flash) flashes.push(result.flash);
+      if (action.type === 'createList' && actionBatchContext.listId) {
+        lastCreatedListId = actionBatchContext.listId;
+      }
+      if (action.type === 'createChapter' && actionBatchContext.chapterId) {
+        lastCreatedChapter = {
+          bookId: actionBatchContext.bookId,
+          chapterId: actionBatchContext.chapterId,
+        };
+      }
+    }
+
+    if (!wasHome) {
+      if (lastCreatedChapter) {
+        state.selectedBookId = lastCreatedChapter.bookId;
+        state.selectedChapterId = lastCreatedChapter.chapterId;
+        state.selectedListId = null;
+        goBrowse();
+      } else if (lastCreatedListId) {
+        state.selectedListId = lastCreatedListId;
+        state.selectedBookId = null;
+        state.selectedChapterId = null;
+        goBrowse();
+      }
+    }
+
+    if (messages.length) save();
+    return { messages, flashes };
+  }
+
+  function summarizeActionMessages(messages) {
+    if (!messages.length) return '';
+    if (messages.length === 1) return messages[0];
+    const added = messages.filter((m) => /^Added to /.test(m)).length;
+    if (added > 1) {
+      const dest = messages[messages.length - 1].replace(/^Added to /, '');
+      return `Added ${added} items to ${dest}`;
+    }
+    return messages[messages.length - 1];
+  }
+
+  function flashSidebarItems(flashes) {
+    if (!flashes?.length) return;
+    requestAnimationFrame(() => {
+      flashes.forEach((f) => {
+        let el = null;
+        if (f.kind === 'book') el = document.querySelector(`[data-book-id="${f.id}"]`);
+        else if (f.kind === 'chapter') el = document.querySelector(`[data-chapter-id="${f.id}"]`);
+        else if (f.kind === 'list') el = document.querySelector(`[data-list-id="${f.id}"]`);
+        if (!el) return;
+        el.classList.add('sidebar-flash');
+        setTimeout(() => el.classList.remove('sidebar-flash'), 1000);
+      });
+    });
+  }
+
+  function showThinkingIndicator() {
+    document.getElementById('thinking-indicator')?.classList.add('visible');
+  }
+
+  function hideThinkingIndicator() {
+    document.getElementById('thinking-indicator')?.classList.remove('visible');
+  }
+
+  function showClarificationBubble(question) {
+    const bubble = document.getElementById('clarification-bubble');
+    const textEl = document.getElementById('clarification-text');
+    if (!bubble || !textEl) return;
+    textEl.textContent = question;
+    bubble.classList.add('visible');
+  }
+
+  function hideClarificationBubble() {
+    document.getElementById('clarification-bubble')?.classList.remove('visible');
+  }
+
+  function clearPendingClarification() {
+    pendingClarification = null;
+    hideClarificationBubble();
+  }
+
+  function finishRouteResponse(route, transcript) {
+    if (route.cancelled) return false;
+
+    if (route.clarification && (!route.actions || !route.actions.length)) {
+      pendingClarification = {
+        question: route.clarification,
+        priorTranscript: transcript.trim(),
       };
-      state.lists.push(list);
-      route.destinationListId = list.id;
-      route.destinationBookId = null;
-      route.destinationChapterId = null;
+      showClarificationBubble(route.clarification);
+      showRouteToast('Hold to answer…');
+      return false;
     }
+
+    clearPendingClarification();
+
+    const { messages, flashes } = applyActions(route.actions);
+    if (!messages.length) return false;
+
+    const toastMsg = summarizeActionMessages(messages);
+    if (state.screen === 'home') {
+      showRouteToast(toastMsg);
+      renderSidebar();
+      renderActivityLog();
+    } else {
+      showRouteToast(toastMsg);
+      renderAll();
+    }
+    flashSidebarItems(flashes);
+    return true;
   }
 
   function getListForNote(note) {
@@ -1293,6 +2227,7 @@
     state.books.forEach(book => {
       const item = document.createElement('div');
       item.className = 'book-item sidebar-node' + (state.selectedBookId === book.id && !state.selectedChapterId ? ' selected' : '') + (book.expanded ? ' expanded' : '');
+      item.dataset.bookId = book.id;
       item.innerHTML = `<span class="chevron">▶</span><span class="node-label">${escapeHtml(book.title)}</span><button type="button" class="kebab-btn" aria-label="Book options">⋮</button>`;
       item.addEventListener('click', (e) => {
         if (e.target.closest('.kebab-btn')) return;
@@ -1323,6 +2258,7 @@
         book.chapters.forEach(chap => {
           const ch = document.createElement('div');
           ch.className = 'chapter-item sidebar-node' + (state.selectedChapterId === chap.id ? ' selected' : '');
+          ch.dataset.chapterId = chap.id;
           ch.innerHTML = `<span class="node-label">${escapeHtml(chap.title)}</span><button type="button" class="kebab-btn" aria-label="Chapter options">⋮</button>`;
           ch.addEventListener('click', (e) => {
             if (e.target.closest('.kebab-btn')) return;
@@ -1375,6 +2311,7 @@
       const count = state.notes.filter(n => n.listId === list.id).length;
       const el = document.createElement('div');
       el.className = 'list-item sidebar-node' + (state.selectedListId === list.id && state.screen === 'browse' ? ' selected' : '');
+      el.dataset.listId = list.id;
       el.innerHTML = `<span class="node-label">${escapeHtml(list.title)}${list.type === 'todo' ? ' ✓' : ''}${count ? ` <span class="misc-count">${count}</span>` : ''}</span><button type="button" class="kebab-btn" aria-label="List options">⋮</button>`;
       el.addEventListener('click', (e) => {
         if (e.target.closest('.kebab-btn')) return;
@@ -1406,7 +2343,7 @@
     const isTodo = list && list.type === 'todo';
     const date = new Date(note.createdAt);
     const timeStr = date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-    const formatted = formatNoteHtml(note.text);
+    const formatted = formatNoteHtml(note.text, note.formatting);
     const bodyHtml = isTodo
       ? `<label class="todo-item${note.checked ? ' done' : ''}">
           <input type="checkbox"${note.checked ? ' checked' : ''} aria-label="Mark done">
@@ -1434,7 +2371,7 @@
     ], (action) => {
       if (action === 'edit') openEditModal(note);
       else if (action === 'move') openMoveModal(note);
-      else if (action === 'delete' && confirm('Delete this annotation?')) {
+      else if (action === 'delete') {
         state.notes = state.notes.filter(n => n.id !== note.id);
         save();
         renderMain();
@@ -1598,6 +2535,7 @@
     renderSidebar();
     updateLayout();
     renderMain();
+    renderActivityLog();
     if (window.matchMedia('(max-width: 599px)').matches) closeSidebar();
   }
 
@@ -1612,7 +2550,7 @@
     return s;
   }
 
-  function formatNoteHtml(text) {
+  function formatNoteHtmlFromMarkdown(text) {
     if (!text) return '';
     const lines = text.split('\n');
     let html = '';
@@ -1629,6 +2567,43 @@
     }
     if (inList) html += '</ul>';
     return html || `<p>${inlineFormat(text)}</p>`;
+  }
+
+  function formatNoteHtml(text, formatting) {
+    if (!text) return '';
+    const ranges = formatting?.length ? normalizeFormattingRanges(formatting, text.length) : [];
+    if (!ranges.length) return formatNoteHtmlFromMarkdown(text);
+
+    const lines = text.split('\n');
+    let html = '';
+    let inList = false;
+    let offset = 0;
+
+    for (const line of lines) {
+      const lineStart = offset;
+      const lineEnd = offset + line.length;
+      const bullet = line.match(/^[-*]\s+(.+)$/);
+
+      if (bullet) {
+        const bulletText = bullet[1];
+        const bulletStart = lineStart + line.indexOf(bulletText);
+        const bulletEnd = bulletStart + bulletText.length;
+        const bulletRanges = rangesForSlice(ranges, bulletStart, bulletEnd);
+        if (!inList) { html += '<ul>'; inList = true; }
+        html += `<li>${renderFormattedText(bulletText, bulletRanges)}</li>`;
+      } else {
+        if (inList) { html += '</ul>'; inList = false; }
+        if (line.trim()) {
+          const lineRanges = rangesForSlice(ranges, lineStart, lineEnd);
+          html += `<p>${renderFormattedText(line, lineRanges)}</p>`;
+        }
+      }
+
+      offset = lineEnd + 1;
+    }
+
+    if (inList) html += '</ul>';
+    return html || `<p>${renderFormattedText(text, ranges)}</p>`;
   }
 
   let activeKebabMenu = null;
@@ -1687,7 +2662,6 @@
   }
 
   function deleteBook(bookId) {
-    if (!confirm('Delete this book and all its notes?')) return;
     state.notes = state.notes.filter(n => n.bookId !== bookId);
     state.books = state.books.filter(b => b.id !== bookId);
     if (state.selectedBookId === bookId) goHome();
@@ -1696,7 +2670,6 @@
   }
 
   function deleteChapter(bookId, chapterId) {
-    if (!confirm('Delete this chapter and its notes?')) return;
     state.notes = state.notes.filter(n => !(n.bookId === bookId && n.chapterId === chapterId));
     const book = state.books.find(b => b.id === bookId);
     if (book) book.chapters = book.chapters.filter(c => c.id !== chapterId);
@@ -1706,13 +2679,20 @@
   }
 
   function deleteList(listId) {
-    if (!confirm('Delete this list and all its items?')) return;
     state.notes = state.notes.filter(n => n.listId !== listId);
     state.lists = state.lists.filter(l => l.id !== listId);
     if (state.stickyTodoListId === listId) state.stickyTodoListId = null;
     if (state.selectedListId === listId) goHome();
     save();
     renderAll();
+  }
+
+  function isEmptyTranscript(text) {
+    const t = (text || '').trim();
+    if (!t) return true;
+    if (/^[\s.…,!?\-–—]+$/.test(t)) return true;
+    if (/^(?:thank you|thanks|you|yeah|um+|uh+|hmm+|oh+|okay|ok)\.?$/i.test(t)) return true;
+    return false;
   }
 
   // ============ MODAL ============
@@ -1758,6 +2738,7 @@
     modalCallback = (val) => {
       const text = (val || '').trim();
       if (text) {
+        if (text !== note.text) delete note.formatting;
         note.text = text;
         save();
         renderMain();
@@ -1876,6 +2857,9 @@
   });
 
   // ============ AUDIO RECORDING + GROQ BACKEND ============
+  const RECORD_TIMESLICE_MS = 1000;
+  const MAX_UPLOAD_BYTES = 3.2 * 1024 * 1024;
+
   let mediaStream = null;
   let mediaRecorder = null;
   let audioChunks = [];
@@ -1883,6 +2867,8 @@
   let isProcessing = false;
   let pendingAudioBlob = null;
   let pendingMimeType = 'audio/webm';
+  let pendingDurationSeconds = null;
+  let recordingStartedAt = null;
 
   const micBtn = document.getElementById('mic-btn');
   const micBarLabel = document.getElementById('mic-bar-label');
@@ -1891,8 +2877,25 @@
   const recordingStatusLabel = document.getElementById('recording-status-label');
 
   function pickMimeType() {
-    const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/aac'];
-    return types.find(t => MediaRecorder.isTypeSupported(t)) || '';
+    const types = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/mp4',
+      'audio/aac',
+      'audio/ogg;codecs=opus',
+    ];
+    return types.find((t) => MediaRecorder.isTypeSupported(t)) || '';
+  }
+
+  function audioUploadMeta(mimeType) {
+    const mime = (mimeType || 'audio/webm').toLowerCase();
+    if (mime.includes('mp4') || mime.includes('m4a') || mime.includes('aac') || mime.includes('x-caf')) {
+      return { filename: 'recording.m4a', mimeType: 'audio/mp4' };
+    }
+    if (mime.includes('ogg')) {
+      return { filename: 'recording.ogg', mimeType: 'audio/ogg' };
+    }
+    return { filename: 'recording.webm', mimeType: 'audio/webm' };
   }
 
   function blobToBase64(blob) {
@@ -1928,156 +2931,106 @@
     recordingStatusLabel.textContent = 'Listening';
   }
 
-  function saveNoteFromRoute(route) {
-    applyRouteCreations(route);
-
-    if (route.clearTodoMode) {
-      state.stickyTodoListId = null;
-    }
-    if (route.enableStickyTodo && route.destinationListId) {
-      state.stickyTodoListId = route.destinationListId;
-    } else if (route.createListType === 'todo' && route.destinationListId) {
-      state.stickyTodoListId = route.destinationListId;
-    }
-
-    const noteTexts = [];
-    if (route.noteItems?.length) {
-      noteTexts.push(...route.noteItems.map(t => String(t).trim()).filter(Boolean));
-    }
-    const noteText = (route.noteText || '').trim();
-    if (noteText && !route.commandOnly) noteTexts.push(noteText);
-
-    let toastMsg = '';
-
-    if (noteTexts.length) {
-      const destList = route.destinationListId ? state.lists.find(l => l.id === route.destinationListId) : null;
-      const isTodoDest = destList?.type === 'todo' || route.createListType === 'todo';
-      noteTexts.forEach((text) => {
-        const note = {
-          id: uid(),
-          bookId: route.destinationListId ? null : (route.destinationBookId || MISC_ID),
-          chapterId: route.destinationListId ? null : (route.destinationChapterId || null),
-          listId: route.destinationListId || null,
-          text,
-          checked: false,
-          routingConfidence: route.confidence || 'low',
-          createdAt: Date.now(),
-        };
-        state.notes.push(note);
-      });
-      const lastNote = state.notes[state.notes.length - 1];
-      toastMsg = noteTexts.length > 1
-        ? `Added ${noteTexts.length} items to ${getNoteLocation(lastNote)}`
-        : 'Saved to ' + getNoteLocation(lastNote);
-      if (isTodoDest && route.destinationListId) {
-        state.stickyTodoListId = route.destinationListId;
-      }
-    } else if (route.createBookTitle) {
-      const chapterCount = route.createChapterTitles?.length || (route.createChapterTitle ? 1 : 0);
-      toastMsg = chapterCount
-        ? `Created book: ${route.createBookTitle.trim()} (${chapterCount} chapters)`
-        : 'Created book: ' + route.createBookTitle.trim();
-    } else if (route.createChapterTitles?.length) {
-      toastMsg = `Added ${route.createChapterTitles.length} chapters`;
-    } else if (route.createChapterTitle) {
-      toastMsg = 'Added chapter: ' + route.createChapterTitle.trim();
-    } else if (route.createListTitle) {
-      toastMsg = 'Created list: ' + route.createListTitle.trim();
-      if (route.createListType === 'todo' || route.enableStickyTodo) {
-        toastMsg += ' — checkbox mode on';
-      }
-    } else if (route.clearTodoMode) {
-      toastMsg = 'Checkbox mode off';
-    } else {
-      return;
-    }
-
-    save();
-    if (state.screen === 'home') {
-      showHomeSaved();
-      showRouteToast(toastMsg);
-      renderSidebar();
-    } else {
-      showRouteToast(toastMsg);
-      renderAll();
-    }
-  }
-
-  async function processRecording(blob) {
-    if (!blob || !blob.size) {
+  async function processRecording(blob, durationSeconds) {
+    if (!blob || blob.size < 800) {
       hideRecordingIndicator();
+      pendingAudioBlob = null;
+      pendingDurationSeconds = null;
       return;
     }
 
     pendingAudioBlob = blob;
+    pendingDurationSeconds = durationSeconds ?? null;
     isProcessing = true;
+
+    console.log('[record] upload prep:', {
+      bytes: blob.size,
+      durationSeconds: durationSeconds != null ? Number(durationSeconds.toFixed(1)) : null,
+      mimeType: pendingMimeType,
+    });
+
+    if (blob.size > MAX_UPLOAD_BYTES) {
+      showRecordingIndicator('Recording too long', `
+        <div>This recording is ${(blob.size / (1024 * 1024)).toFixed(1)} MB — too large to upload reliably. Try a shorter clip (under ~60s).</div>
+      `);
+      isProcessing = false;
+      pendingAudioBlob = null;
+      pendingDurationSeconds = null;
+      resetMicButtons();
+      return;
+    }
+
     showRecordingIndicator('Transcribing…', 'Sending audio…');
 
     try {
       const base64 = await blobToBase64(blob);
-      const filename = pendingMimeType.includes('mp4') || pendingMimeType.includes('aac')
-        ? 'recording.m4a' : 'recording.webm';
+      const upload = audioUploadMeta(pendingMimeType);
 
       const transcribeRes = await fetch('/api/transcribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           audio: base64,
-          mimeType: pendingMimeType,
-          filename,
+          mimeType: upload.mimeType,
+          filename: upload.filename,
+          durationSeconds: durationSeconds ?? null,
           books: state.books.map(b => b.title),
           lists: state.lists.map(l => l.title),
         }),
       });
       if (!transcribeRes.ok) throw new Error(await getErrorMessage(transcribeRes));
 
-      const { transcript } = await transcribeRes.json();
-      if (!transcript || !transcript.trim()) {
+      const data = await transcribeRes.json();
+      const { transcript, meta } = data;
+
+      if (meta) {
+        console.log('[transcribe]', meta);
+        if (meta.warnings?.length) {
+          meta.warnings.forEach((w) => console.warn('[transcribe]', w));
+        }
+      }
+
+      if (isEmptyTranscript(transcript)) {
         hideRecordingIndicator();
         pendingAudioBlob = null;
+        pendingDurationSeconds = null;
         return;
       }
 
-      showRecordingIndicator('Transcribing…', escapeHtml(transcript.trim()));
+      showRecordingIndicator('Routing…', escapeHtml(transcript.trim()));
+      showThinkingIndicator();
 
-      let defaultBookId = MISC_ID;
-      let defaultChapterId = null;
-      let defaultListId = null;
-      const routingMode = state.screen === 'home' ? 'home' : 'context';
-
-      if (state.screen === 'browse') {
-        if (state.selectedListId) {
-          defaultListId = state.selectedListId;
-          defaultBookId = null;
-        } else if (state.selectedBookId === MISC_ID) {
-          defaultBookId = MISC_ID;
-        } else if (state.selectedBookId) {
-          defaultBookId = state.selectedBookId;
-          defaultChapterId = state.selectedChapterId || null;
-        }
+      const routePayload = {
+        transcript: transcript.trim(),
+        state: buildRouteState(),
+        notes: state.notes,
+      };
+      if (pendingClarification) {
+        routePayload.priorTranscript = pendingClarification.priorTranscript;
+        routePayload.clarificationContext = pendingClarification.question;
       }
 
       const routeRes = await fetch('/api/route', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          transcript: transcript.trim(),
-          books: state.books,
-          lists: state.lists,
-          defaultBookId,
-          defaultChapterId,
-          defaultListId,
-          routingMode,
-          stickyTodoListId: state.stickyTodoListId,
-        }),
+        body: JSON.stringify(routePayload),
       });
       if (!routeRes.ok) throw new Error(await getErrorMessage(routeRes));
 
       const route = await routeRes.json();
-      saveNoteFromRoute(route);
+      hideThinkingIndicator();
+      if (route.cancelled) {
+        clearPendingClarification();
+        pendingAudioBlob = null;
+        hideRecordingIndicator();
+        return;
+      }
+      finishRouteResponse(route, transcript);
       pendingAudioBlob = null;
+      pendingDurationSeconds = null;
       hideRecordingIndicator();
     } catch (err) {
+      hideThinkingIndicator();
       console.error('processRecording:', err);
       const retryBtnId = 'recording-retry-btn';
       showRecordingIndicator('Error', `
@@ -2087,7 +3040,7 @@
         </div>
       `);
       document.getElementById(retryBtnId)?.addEventListener('click', () => {
-        if (pendingAudioBlob) processRecording(pendingAudioBlob);
+        if (pendingAudioBlob) processRecording(pendingAudioBlob, pendingDurationSeconds);
       });
     } finally {
       isProcessing = false;
@@ -2120,6 +3073,29 @@
     resetMicButtons();
   }
 
+  function finishRecordingUI() {
+    isRecording = false;
+    if (activeMic) {
+      if (activeMic === homeCanvas) activeMic.classList.remove('active');
+      else {
+        activeMic.classList.remove('recording');
+        if (typeof activeMic.disabled !== 'undefined') activeMic.disabled = false;
+      }
+    }
+    activeMic = null;
+    mediaRecorder = null;
+  }
+
+  async function ensureMicrophone() {
+    if (mediaStream && mediaStream.getTracks().some((t) => t.readyState === 'live')) {
+      return mediaStream;
+    }
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true },
+    });
+    return mediaStream;
+  }
+
   async function startRecording(micEl, isHome) {
     if (isRecording || isProcessing) return;
 
@@ -2128,39 +3104,65 @@
       return;
     }
 
-    try {
-      releaseMicrophone();
-      mediaStream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true },
-      });
+    if (pendingClarification) {
+      hideClarificationBubble();
+    }
 
-      activeMic = micEl;
+    activeMic = micEl;
+    if (isHome) micEl.classList.add('active');
+    else {
+      micEl.classList.add('recording');
+      micBarLabel.textContent = 'Listening…';
+      showRecordingIndicator('Listening', '…');
+    }
+
+    try {
+      await ensureMicrophone();
       audioChunks = [];
+      recordingStartedAt = Date.now();
       const mimeType = pickMimeType();
       mediaRecorder = new MediaRecorder(mediaStream, mimeType ? { mimeType } : undefined);
       pendingMimeType = mediaRecorder.mimeType || mimeType || 'audio/webm';
 
       mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) audioChunks.push(e.data);
-      };
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(audioChunks, { type: pendingMimeType });
-        releaseMicrophone();
-        processRecording(blob);
+        if (e.data && e.data.size > 0) audioChunks.push(e.data);
       };
 
-      mediaRecorder.start(250);
+      mediaRecorder.onstop = () => {
+        const durationSeconds = recordingStartedAt
+          ? (Date.now() - recordingStartedAt) / 1000
+          : null;
+        recordingStartedAt = null;
+
+        const chunks = audioChunks.slice();
+        audioChunks = [];
+
+        const blob = new Blob(chunks, { type: pendingMimeType });
+        console.log('[record] stopped:', {
+          bytes: blob.size,
+          chunks: chunks.length,
+          durationSeconds: durationSeconds != null ? Number(durationSeconds.toFixed(1)) : null,
+          mimeType: pendingMimeType,
+        });
+
+        finishRecordingUI();
+        processRecording(blob, durationSeconds);
+      };
+
+      mediaRecorder.onerror = (e) => {
+        console.error('MediaRecorder error:', e.error || e);
+        audioChunks = [];
+        recordingStartedAt = null;
+        finishRecordingUI();
+        resetMicButtons();
+      };
+
+      mediaRecorder.start(RECORD_TIMESLICE_MS);
       isRecording = true;
-      if (isHome) {
-        micEl.classList.add('active');
-      } else {
-        micEl.classList.add('recording');
-        micBarLabel.textContent = 'Listening…';
-      }
-      if (!isHome) showRecordingIndicator('Listening', '…');
     } catch (err) {
       console.error('startRecording:', err);
-      releaseMicrophone();
+      finishRecordingUI();
+      if (homeCanvas) homeCanvas.classList.remove('active');
       alert('Microphone permission denied. Please allow it in your browser settings.');
     }
   }
@@ -2168,20 +3170,24 @@
   function stopRecording() {
     if (!isRecording || !mediaRecorder) return;
     isRecording = false;
-    if (activeMic) {
-      if (activeMic === homeCanvas) activeMic.classList.remove('active');
-      else {
-        activeMic.classList.remove('recording');
-        activeMic.disabled = true;
-      }
+    if (activeMic && activeMic !== homeCanvas) {
+      activeMic.disabled = true;
     }
     if (activeMic !== homeCanvas) micBarLabel.textContent = 'Hold to talk';
 
     if (mediaRecorder.state !== 'inactive') {
-      if (typeof mediaRecorder.requestData === 'function') mediaRecorder.requestData();
-      mediaRecorder.stop();
+      try {
+        if (mediaRecorder.state === 'recording' && typeof mediaRecorder.requestData === 'function') {
+          mediaRecorder.requestData();
+        }
+        mediaRecorder.stop();
+      } catch (err) {
+        console.error('stopRecording:', err);
+        finishRecordingUI();
+        resetMicButtons();
+      }
     } else {
-      releaseMicrophone();
+      finishRecordingUI();
       resetMicButtons();
     }
   }
@@ -2229,6 +3235,11 @@
   document.getElementById('theme-toggle').addEventListener('click', () => {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     setTheme(isDark ? 'light' : 'dark');
+  });
+
+  document.getElementById('clarification-dismiss')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    clearPendingClarification();
   });
 
   document.addEventListener('click', (e) => {
