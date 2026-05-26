@@ -86,6 +86,20 @@ CRITICAL — noteText vs commands:
   - "Add a to-do list: call mom" → createListTitle: "To-do", createListType: "todo", noteText: "call mom", commandOnly: false
 - Never keep "add this to", "put in books", "file under", "make a new book", etc. in noteText
 
+FORMATTING (use markdown in noteText):
+- **text** for bold (when user says "bold", "emphasize", "make X bold")
+- *text* for italic (when user says "italic", "emphasize in italics")
+- Lines starting with "- " for bullet lists (when user says "bullet", "list item", "add to the list")
+- Strip spoken formatting commands from noteText; apply formatting to the content they describe
+- Example: "bold this: important passage" → noteText: "**important passage**"
+
+TODO / CHECKBOX LISTS:
+- createListType: "todo" for to-do/todo/checklist/task list/shopping list / "today's to-do"
+- enableStickyTodo: true when user creates a todo list they want to keep adding checkboxes to
+- clearTodoMode: true when user says stop todo mode / no more checkboxes / back to normal notes
+- noteItems: array of separate tasks when user lists multiple items in one utterance (e.g. "buy milk, call mom, pick up dry cleaning")
+- When stickyTodoListId is provided and no other destination named, route new tasks there as checkbox items
+
 Creation:
 - createBookTitle when user asks for a new book (default title "New book" if unnamed)
 - createChapterTitles: array of chapter names when user asks for multiple chapters (use "Chapter 1", "Chapter 2" if unnamed)
@@ -108,6 +122,9 @@ Respond with JSON only:
   "createListTitle": "string or null",
   "createListType": "todo or notes or null",
   "noteText": "string",
+  "noteItems": ["string"] or null,
+  "enableStickyTodo": true or false,
+  "clearTodoMode": true or false,
   "commandOnly": true or false,
   "confidence": "high" | "medium" | "low",
   "reasoning": "string"
@@ -231,13 +248,29 @@ function detectStructureCommand(transcript) {
 
   const namedListOnly = trimmed.match(/^(?:make|create|add)\s+(?:a\s+)?(?:new\s+)?((?:to-?do\s*)?list)(?:\s+(?:called|named)\s+(.+?))\s*\.?$/i);
   if (namedListOnly && !/(?::\s*\S|first note|note:|saying)/i.test(trimmed)) {
-    const isTodo = /to-?do/i.test(namedListOnly[1]);
+    const isTodo = /to-?do/i.test(namedListOnly[1]) || /to-?do|checklist|task/i.test(namedListOnly[2]);
     return {
       createListTitle: namedListOnly[2].trim(),
       createListType: isTodo ? 'todo' : 'notes',
+      enableStickyTodo: isTodo,
       noteText: '',
       commandOnly: true,
     };
+  }
+
+  const todoListForToday = trimmed.match(/(?:make|create|add)\s+(?:a\s+)?(?:new\s+)?list\s+(?:for\s+)?(?:today'?s?\s+)?(?:to-?do|todo)(?:\s+list)?(?:\s+(?:called|named)\s+(.+?))?/i);
+  if (todoListForToday && !/(?::\s*\S)/i.test(trimmed)) {
+    return {
+      createListTitle: (todoListForToday[1] || "Today's to-do").trim(),
+      createListType: 'todo',
+      enableStickyTodo: true,
+      noteText: '',
+      commandOnly: true,
+    };
+  }
+
+  if (/^(?:stop|end|turn off)\s+(?:to-?do|todo|checkbox)\s+mode/i.test(trimmed) || /no more checkboxes/i.test(trimmed)) {
+    return { clearTodoMode: true, noteText: '', commandOnly: true };
   }
 
   const addChapters = trimmed.match(/^(?:add|create|make)\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+chapters?\s*\.?$/i);
@@ -364,13 +397,16 @@ function buildRouteResult(fields) {
     createListTitle: fields.createListTitle || null,
     createListType: fields.createListType || null,
     noteText: (fields.noteText || '').trim(),
+    noteItems: Array.isArray(fields.noteItems) ? fields.noteItems.filter(Boolean) : null,
+    enableStickyTodo: !!fields.enableStickyTodo,
+    clearTodoMode: !!fields.clearTodoMode,
     commandOnly: !!fields.commandOnly,
     confidence: fields.confidence || 'low',
     reasoning: fields.reasoning || '',
   };
 }
 
-function validateRoute(parsed, books, lists, defaultBookId, defaultChapterId, defaultListId, routingMode) {
+function validateRoute(parsed, books, lists, defaultBookId, defaultChapterId, defaultListId, routingMode, stickyTodoListId) {
   const bookIds = new Set(books.map(b => b.id));
   const listIds = new Set(lists.map(l => l.id));
   const MISC = defaultBookId === '__misc__' || !defaultBookId ? '__misc__' : defaultBookId;
@@ -422,10 +458,17 @@ function validateRoute(parsed, books, lists, defaultBookId, defaultChapterId, de
       if (confidence === 'high') confidence = 'medium';
     }
   } else if (!parsed.createBookTitle && !parsed.createListTitle && !(parsed.createChapterTitles?.length)) {
-    destinationBookId = MISC;
-    destinationChapterId = null;
-    destinationListId = null;
-    confidence = 'low';
+    if (stickyTodoListId && listIds.has(stickyTodoListId) && !parsed.destinationBookId && !parsed.destinationListId) {
+      destinationListId = stickyTodoListId;
+      destinationBookId = null;
+      destinationChapterId = null;
+      confidence = 'medium';
+    } else {
+      destinationBookId = MISC;
+      destinationChapterId = null;
+      destinationListId = null;
+      confidence = 'low';
+    }
   }
 
   return buildRouteResult({
@@ -438,6 +481,9 @@ function validateRoute(parsed, books, lists, defaultBookId, defaultChapterId, de
     createListTitle: parsed.createListTitle,
     createListType: parsed.createListType,
     noteText: parsed.noteText,
+    noteItems: parsed.noteItems,
+    enableStickyTodo: parsed.enableStickyTodo,
+    clearTodoMode: parsed.clearTodoMode,
     commandOnly: parsed.commandOnly,
     confidence,
     reasoning: parsed.reasoning,
@@ -457,6 +503,7 @@ module.exports = async function handler(req, res) {
     defaultChapterId = null,
     defaultListId = null,
     routingMode = 'home',
+    stickyTodoListId = null,
   } = req.body || {};
 
   if (!transcript || typeof transcript !== 'string') {
@@ -482,7 +529,8 @@ module.exports = async function handler(req, res) {
       defaultBookId,
       defaultChapterId,
       defaultListId,
-      'context'
+      'context',
+      stickyTodoListId
     );
     route.noteText = finalizeNoteText(route, trimmed);
     if (!route.noteText && !hasStructureCreation(route) && !route.commandOnly) {
@@ -495,9 +543,11 @@ module.exports = async function handler(req, res) {
 
     if (structureCmd?.commandOnly) {
       const parsed = normalizeCreations({ ...structureCmd, confidence: 'high', reasoning: 'Structure command' });
-      let route = validateRoute(parsed, books, lists, defaultBookId || '__misc__', defaultChapterId, defaultListId, 'home');
+      let route = validateRoute(parsed, books, lists, defaultBookId || '__misc__', defaultChapterId, defaultListId, 'home', stickyTodoListId);
       route.noteText = '';
       route.commandOnly = true;
+      route.enableStickyTodo = !!parsed.enableStickyTodo;
+      route.clearTodoMode = !!parsed.clearTodoMode;
       return res.status(200).json(route);
     }
 
@@ -510,6 +560,7 @@ module.exports = async function handler(req, res) {
         title: b.title,
         chapters: (b.chapters || []).map(c => ({ id: c.id, title: c.title })),
       })),
+      stickyTodoListId: stickyTodoListId || null,
       lists: lists.map(l => ({ id: l.id, title: l.title, type: l.type || 'notes' })),
     });
 
@@ -538,9 +589,12 @@ module.exports = async function handler(req, res) {
       if (!parsed.noteText && structureCmd.noteText) parsed.noteText = structureCmd.noteText;
     }
 
-    let route = validateRoute(parsed, books, lists, defaultBookId || '__misc__', defaultChapterId, defaultListId, 'home');
+    let route = validateRoute(parsed, books, lists, defaultBookId || '__misc__', defaultChapterId, defaultListId, 'home', stickyTodoListId);
     route.createChapterTitles = parsed.createChapterTitles || null;
     route.commandOnly = !!parsed.commandOnly;
+    route.noteItems = parsed.noteItems || null;
+    route.enableStickyTodo = !!parsed.enableStickyTodo;
+    route.clearTodoMode = !!parsed.clearTodoMode;
 
     const stripped = stripRoutingPhrases(trimmed, books, lists);
     const llmNote = (parsed.noteText || '').trim();
@@ -561,10 +615,17 @@ module.exports = async function handler(req, res) {
     }
 
     if (!hasRoutingSignal(trimmed, books, lists) && !hasStructureCreation(route)) {
-      route.destinationBookId = '__misc__';
-      route.destinationChapterId = null;
-      route.destinationListId = null;
-      route.confidence = 'low';
+      if (stickyTodoListId && lists.some((l) => l.id === stickyTodoListId)) {
+        route.destinationListId = stickyTodoListId;
+        route.destinationBookId = null;
+        route.destinationChapterId = null;
+        route.confidence = 'medium';
+      } else {
+        route.destinationBookId = '__misc__';
+        route.destinationChapterId = null;
+        route.destinationListId = null;
+        route.confidence = 'low';
+      }
     }
 
     return res.status(200).json(route);

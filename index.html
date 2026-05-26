@@ -124,13 +124,14 @@
   .book-list { padding: 0 0 8px; }
 
   .book-item {
-    padding: 8px 20px 8px 36px;
+    padding: 8px 12px 8px 36px;
     cursor: pointer;
     font-family: var(--serif);
     font-size: 15px;
     color: var(--text);
     display: flex;
     align-items: center;
+    gap: 4px;
     border-left: 3px solid transparent;
     user-select: none;
   }
@@ -154,12 +155,15 @@
   .chapter-list { padding: 0; }
 
   .chapter-item {
-    padding: 6px 20px 6px 56px;
+    padding: 6px 12px 6px 56px;
     cursor: pointer;
     font-size: 13px;
     color: var(--text-muted);
     border-left: 3px solid transparent;
     user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
 
   .chapter-item:hover { background: var(--hover-bg); color: var(--text); }
@@ -263,9 +267,117 @@
     position: relative;
     margin-top: 1.75em;
     padding-left: 1.5em;
+    padding-right: 2rem;
     transition: background 0.12s, box-shadow 0.12s;
-    -webkit-touch-callout: none;
   }
+
+  .node-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .kebab-btn {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--text-faint);
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 17px;
+    line-height: 1;
+    padding: 0;
+    opacity: 0;
+    transition: opacity 0.12s, background 0.12s;
+  }
+
+  .kebab-btn:hover,
+  .kebab-btn:focus {
+    background: var(--hover-bg);
+    color: var(--text);
+    outline: none;
+  }
+
+  .note-entry .kebab-btn {
+    position: absolute;
+    right: 0;
+    top: 2px;
+  }
+
+  .note-entry:hover .kebab-btn,
+  .note-entry.selected .kebab-btn,
+  .note-entry.menu-open .kebab-btn,
+  .sidebar-node:hover .kebab-btn,
+  .sidebar-node.selected .kebab-btn,
+  .sidebar-node.menu-open .kebab-btn {
+    opacity: 1;
+  }
+
+  @media (hover: none) {
+    .kebab-btn { opacity: 0.5; }
+    .note-entry.selected .kebab-btn,
+    .sidebar-node.selected .kebab-btn,
+    .note-entry.menu-open .kebab-btn,
+    .sidebar-node.menu-open .kebab-btn {
+      opacity: 1;
+    }
+  }
+
+  .kebab-menu {
+    position: fixed;
+    z-index: 190;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    padding: 6px;
+    min-width: 168px;
+  }
+
+  .kebab-menu button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 11px 14px;
+    border: none;
+    background: none;
+    font-family: var(--sans);
+    font-size: 15px;
+    color: var(--text);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .kebab-menu button:hover,
+  .kebab-menu button:focus {
+    background: var(--hover-bg);
+    outline: none;
+  }
+
+  .kebab-menu button.danger {
+    color: var(--mic-red);
+  }
+
+  .kebab-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 180;
+    background: transparent;
+  }
+
+  .note-text strong { font-weight: 600; }
+  .note-text em { font-style: italic; }
+  .note-text ul {
+    margin: 0.35em 0 0.35em 1.2em;
+    padding: 0;
+  }
+  .note-text ul li { margin: 0.2em 0; }
+  .note-text p { margin: 0; }
+  .note-text p + p { margin-top: 0.65em; }
 
   .note-entry:first-child { margin-top: 0; }
 
@@ -317,66 +429,8 @@
   }
 
   .note-entry:hover .note-meta,
-  .note-entry.show-meta .note-meta {
+  .note-entry.selected .note-meta {
     opacity: 1;
-  }
-
-  .note-entry.press-hold {
-    background: var(--selected-bg);
-    border-radius: 8px;
-    padding: 10px 12px 10px calc(1.5em + 12px);
-    margin-left: -12px;
-    margin-right: -12px;
-  }
-
-  .note-action-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 180;
-    background: transparent;
-  }
-
-  .note-action-menu {
-    position: fixed;
-    z-index: 190;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-    padding: 6px;
-    min-width: 168px;
-  }
-
-  .note-action-menu button {
-    display: block;
-    width: 100%;
-    text-align: left;
-    padding: 11px 14px;
-    border: none;
-    background: none;
-    font-family: var(--sans);
-    font-size: 15px;
-    color: var(--text);
-    border-radius: 8px;
-    cursor: pointer;
-  }
-
-  .note-action-menu button:hover,
-  .note-action-menu button:focus {
-    background: var(--hover-bg);
-    outline: none;
-  }
-
-  .note-action-menu button.danger {
-    color: var(--mic-red);
-  }
-
-  .note-time {
-    font-size: 10px;
-    color: var(--text-faint);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-right: auto;
   }
 
   .note-route {
@@ -384,8 +438,8 @@
     font-weight: 500;
   }
 
-  .note-entry:hover,
-  .note-entry.expanded {
+  .note-entry.selected,
+  .note-entry:hover {
     background: var(--bg);
     border-radius: 8px;
     padding: 10px 12px 10px calc(1.5em + 12px);
@@ -393,34 +447,6 @@
     margin-right: -12px;
     box-shadow: 0 0 0 1px var(--border);
   }
-
-  .note-delete {
-    background: none;
-    border: none;
-    color: var(--text-faint);
-    cursor: pointer;
-    font-size: 16px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    line-height: 1;
-  }
-
-  .note-delete:hover { background: rgba(197, 74, 58, 0.1); color: var(--mic-red); }
-
-  .note-edit,
-  .note-move {
-    background: none;
-    border: none;
-    color: var(--text-faint);
-    cursor: pointer;
-    font-size: 11px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-family: var(--sans);
-  }
-
-  .note-edit:hover,
-  .note-move:hover { background: rgba(139, 90, 60, 0.1); color: var(--accent); }
 
   .recording-error button {
     margin-top: 6px;
@@ -796,12 +822,15 @@
   .main.home-mode .mic-bar { display: none; }
 
   .list-item {
-    padding: 8px 20px;
+    padding: 8px 12px 8px 20px;
     cursor: pointer;
     font-size: 14px;
     color: var(--text-muted);
     border-left: 3px solid transparent;
     user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
 
   .list-item:hover { background: var(--hover-bg); color: var(--text); }
@@ -1086,6 +1115,7 @@
     selectedBookId: null,
     selectedChapterId: null,
     selectedListId: null,
+    stickyTodoListId: null,
   };
 
   const STORAGE_KEY = 'blurt-v1';
@@ -1101,6 +1131,7 @@
         if (!state.lists) state.lists = [];
         state.lists.forEach(l => { if (!l.type) l.type = 'notes'; });
         if (!state.screen) state.screen = 'home';
+        if (state.stickyTodoListId === undefined) state.stickyTodoListId = null;
       }
     } catch (e) { console.error('load failed', e); }
   }
@@ -1225,9 +1256,10 @@
 
     state.books.forEach(book => {
       const item = document.createElement('div');
-      item.className = 'book-item' + (state.selectedBookId === book.id && !state.selectedChapterId ? ' selected' : '') + (book.expanded ? ' expanded' : '');
-      item.innerHTML = `<span class="chevron">▶</span><span>${escapeHtml(book.title)}</span>`;
+      item.className = 'book-item sidebar-node' + (state.selectedBookId === book.id && !state.selectedChapterId ? ' selected' : '') + (book.expanded ? ' expanded' : '');
+      item.innerHTML = `<span class="chevron">▶</span><span class="node-label">${escapeHtml(book.title)}</span><button type="button" class="kebab-btn" aria-label="Book options">⋮</button>`;
       item.addEventListener('click', (e) => {
+        if (e.target.closest('.kebab-btn')) return;
         e.stopPropagation();
         book.expanded = !book.expanded;
         state.selectedBookId = book.id;
@@ -1237,6 +1269,16 @@
         save();
         renderAll();
       });
+      attachKebabButton(item.querySelector('.kebab-btn'), [
+        { id: 'rename', label: 'Rename' },
+        { id: 'delete', label: 'Delete', danger: true },
+      ], (action) => {
+        if (action === 'rename') {
+          openModal('Rename book', book.title, (val) => {
+            if (val.trim()) { book.title = val.trim(); save(); renderAll(); }
+          });
+        } else if (action === 'delete') deleteBook(book.id);
+      });
       list.appendChild(item);
 
       if (book.expanded) {
@@ -1244,9 +1286,10 @@
         chapterList.className = 'chapter-list';
         book.chapters.forEach(chap => {
           const ch = document.createElement('div');
-          ch.className = 'chapter-item' + (state.selectedChapterId === chap.id ? ' selected' : '');
-          ch.textContent = chap.title;
+          ch.className = 'chapter-item sidebar-node' + (state.selectedChapterId === chap.id ? ' selected' : '');
+          ch.innerHTML = `<span class="node-label">${escapeHtml(chap.title)}</span><button type="button" class="kebab-btn" aria-label="Chapter options">⋮</button>`;
           ch.addEventListener('click', (e) => {
+            if (e.target.closest('.kebab-btn')) return;
             e.stopPropagation();
             state.selectedBookId = book.id;
             state.selectedChapterId = chap.id;
@@ -1254,6 +1297,16 @@
             goBrowse();
             save();
             renderAll();
+          });
+          attachKebabButton(ch.querySelector('.kebab-btn'), [
+            { id: 'rename', label: 'Rename' },
+            { id: 'delete', label: 'Delete', danger: true },
+          ], (action) => {
+            if (action === 'rename') {
+              openModal('Rename chapter', chap.title, (val) => {
+                if (val.trim()) { chap.title = val.trim(); save(); renderAll(); }
+              });
+            } else if (action === 'delete') deleteChapter(book.id, chap.id);
           });
           chapterList.appendChild(ch);
         });
@@ -1285,15 +1338,26 @@
     state.lists.forEach(list => {
       const count = state.notes.filter(n => n.listId === list.id).length;
       const el = document.createElement('div');
-      el.className = 'list-item' + (state.selectedListId === list.id && state.screen === 'browse' ? ' selected' : '');
-      el.innerHTML = `${escapeHtml(list.title)}${count ? ` <span class="misc-count">${count}</span>` : ''}`;
-      el.addEventListener('click', () => {
+      el.className = 'list-item sidebar-node' + (state.selectedListId === list.id && state.screen === 'browse' ? ' selected' : '');
+      el.innerHTML = `<span class="node-label">${escapeHtml(list.title)}${list.type === 'todo' ? ' ✓' : ''}${count ? ` <span class="misc-count">${count}</span>` : ''}</span><button type="button" class="kebab-btn" aria-label="List options">⋮</button>`;
+      el.addEventListener('click', (e) => {
+        if (e.target.closest('.kebab-btn')) return;
         state.selectedListId = list.id;
         state.selectedBookId = null;
         state.selectedChapterId = null;
         goBrowse();
         save();
         renderAll();
+      });
+      attachKebabButton(el.querySelector('.kebab-btn'), [
+        { id: 'rename', label: 'Rename' },
+        { id: 'delete', label: 'Delete', danger: true },
+      ], (action) => {
+        if (action === 'rename') {
+          openModal('Rename list', list.title, (val) => {
+            if (val.trim()) { list.title = val.trim(); save(); renderAll(); }
+          });
+        } else if (action === 'delete') deleteList(list.id);
       });
       listContainer.appendChild(el);
     });
@@ -1306,13 +1370,15 @@
     const isTodo = list && list.type === 'todo';
     const date = new Date(note.createdAt);
     const timeStr = date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    const formatted = formatNoteHtml(note.text);
     const bodyHtml = isTodo
       ? `<label class="todo-item${note.checked ? ' done' : ''}">
           <input type="checkbox"${note.checked ? ' checked' : ''} aria-label="Mark done">
-          <span class="note-text">${escapeHtml(note.text)}</span>
+          <span class="note-text">${formatted}</span>
         </label>`
-      : `<p class="note-text">${escapeHtml(note.text)}</p>`;
+      : `<div class="note-text">${formatted}</div>`;
     el.innerHTML = `
+      <button type="button" class="kebab-btn" aria-label="Note options">⋮</button>
       <div class="note-meta">${showRoute ? `<span class="note-route">${escapeHtml(getNoteLocation(note))}</span> · ` : ''}${timeStr}</div>
       ${bodyHtml}
     `;
@@ -1325,55 +1391,11 @@
         renderMain();
       });
     }
-    attachNoteActions(el, note);
-    return el;
-  }
-
-  let activeNoteMenu = null;
-
-  function closeNoteActionMenu() {
-    if (!activeNoteMenu) return;
-    activeNoteMenu.backdrop.remove();
-    activeNoteMenu.menu.remove();
-    activeNoteMenu.entry.classList.remove('press-hold', 'show-meta');
-    activeNoteMenu = null;
-  }
-
-  function showNoteActionMenu(note, entry, x, y) {
-    closeNoteActionMenu();
-
-    const backdrop = document.createElement('div');
-    backdrop.className = 'note-action-backdrop';
-    backdrop.addEventListener('click', closeNoteActionMenu);
-
-    const menu = document.createElement('div');
-    menu.className = 'note-action-menu';
-    menu.innerHTML = `
-      <button type="button" data-action="edit">Edit</button>
-      <button type="button" data-action="move">Move</button>
-      <button type="button" data-action="delete" class="danger">Delete</button>
-    `;
-
-    document.body.appendChild(backdrop);
-    document.body.appendChild(menu);
-
-    const rect = entry.getBoundingClientRect();
-    const menuW = menu.offsetWidth;
-    const menuH = menu.offsetHeight;
-    let left = typeof x === 'number' ? x : rect.left;
-    let top = typeof y === 'number' ? y : rect.top;
-    left = Math.max(12, Math.min(left, window.innerWidth - menuW - 12));
-    top = Math.max(12, Math.min(top, window.innerHeight - menuH - 12));
-    menu.style.left = `${left}px`;
-    menu.style.top = `${top}px`;
-
-    entry.classList.add('press-hold', 'show-meta');
-    activeNoteMenu = { backdrop, menu, entry };
-
-    menu.addEventListener('click', (e) => {
-      const action = e.target.closest('[data-action]')?.dataset.action;
-      if (!action) return;
-      closeNoteActionMenu();
+    attachKebabButton(el.querySelector('.kebab-btn'), [
+      { id: 'edit', label: 'Edit' },
+      { id: 'move', label: 'Move' },
+      { id: 'delete', label: 'Delete', danger: true },
+    ], (action) => {
       if (action === 'edit') openEditModal(note);
       else if (action === 'move') openMoveModal(note);
       else if (action === 'delete' && confirm('Delete this annotation?')) {
@@ -1382,59 +1404,12 @@
         renderMain();
       }
     });
-
-    if (navigator.vibrate) navigator.vibrate(12);
-  }
-
-  function attachNoteActions(el, note) {
-    let pressTimer = null;
-    let startX = 0;
-    let startY = 0;
-
-    function clearPress() {
-      if (pressTimer) clearTimeout(pressTimer);
-      pressTimer = null;
-    }
-
-    function onPressStart(clientX, clientY, target) {
-      if (target.closest('input[type="checkbox"]')) return;
-      startX = clientX;
-      startY = clientY;
-      clearPress();
-      pressTimer = setTimeout(() => {
-        showNoteActionMenu(note, el, clientX, clientY);
-      }, 480);
-    }
-
-    function onPressMove(clientX, clientY) {
-      if (!pressTimer) return;
-      if (Math.abs(clientX - startX) > 10 || Math.abs(clientY - startY) > 10) clearPress();
-    }
-
-    el.addEventListener('mousedown', (e) => {
-      if (e.button !== 0) return;
-      onPressStart(e.clientX, e.clientY, e.target);
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('.kebab-btn') || e.target.closest('input[type="checkbox"]')) return;
+      document.querySelectorAll('.note-entry.selected').forEach(n => { if (n !== el) n.classList.remove('selected'); });
+      el.classList.toggle('selected');
     });
-    el.addEventListener('mousemove', (e) => onPressMove(e.clientX, e.clientY));
-    el.addEventListener('mouseup', clearPress);
-    el.addEventListener('mouseleave', clearPress);
-
-    el.addEventListener('touchstart', (e) => {
-      const t = e.touches[0];
-      onPressStart(t.clientX, t.clientY, e.target);
-    }, { passive: true });
-    el.addEventListener('touchmove', (e) => {
-      const t = e.touches[0];
-      onPressMove(t.clientX, t.clientY);
-    }, { passive: true });
-    el.addEventListener('touchend', clearPress);
-    el.addEventListener('touchcancel', clearPress);
-
-    el.addEventListener('contextmenu', (e) => {
-      if (e.target.closest('input[type="checkbox"]')) return;
-      e.preventDefault();
-      showNoteActionMenu(note, el, e.clientX, e.clientY);
-    });
+    return el;
   }
 
   function renderNotesCanvas(notes, showRoute) {
@@ -1469,7 +1444,9 @@
       breadcrumb.textContent = 'Lists';
       title.textContent = list ? list.title : 'List';
       meta.textContent = list && list.type === 'todo'
-        ? 'Hold the bar below to add a to-do item'
+        ? (state.stickyTodoListId === list.id
+          ? 'To-do mode — new blurts add checkboxes here until you say stop'
+          : 'Hold the bar below to add a to-do item')
         : 'Hold the bar below to add to this list';
       const listNotes = state.notes.filter(n => n.listId === state.selectedListId);
       if (listNotes.length === 0) {
@@ -1579,7 +1556,7 @@
   mainEl.addEventListener('touchcancel', () => { swipeStart = null; }, { passive: true });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeNoteActionMenu();
+    if (e.key === 'Escape') closeKebabMenu();
   });
 
   function renderAll() {
@@ -1591,6 +1568,116 @@
 
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+
+  function inlineFormat(text) {
+    let s = escapeHtml(text);
+    s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/(^|[^*])\*(?!\*)(.+?)\*(?!\*)/g, '$1<em>$2</em>');
+    return s;
+  }
+
+  function formatNoteHtml(text) {
+    if (!text) return '';
+    const lines = text.split('\n');
+    let html = '';
+    let inList = false;
+    for (const line of lines) {
+      const bullet = line.match(/^[-*]\s+(.+)$/);
+      if (bullet) {
+        if (!inList) { html += '<ul>'; inList = true; }
+        html += `<li>${inlineFormat(bullet[1])}</li>`;
+      } else {
+        if (inList) { html += '</ul>'; inList = false; }
+        if (line.trim()) html += `<p>${inlineFormat(line)}</p>`;
+      }
+    }
+    if (inList) html += '</ul>';
+    return html || `<p>${inlineFormat(text)}</p>`;
+  }
+
+  let activeKebabMenu = null;
+
+  function closeKebabMenu() {
+    if (!activeKebabMenu) return;
+    activeKebabMenu.backdrop.remove();
+    activeKebabMenu.menu.remove();
+    activeKebabMenu.host?.classList.remove('menu-open');
+    activeKebabMenu = null;
+  }
+
+  function showKebabMenu(anchorEl, items, onAction) {
+    closeKebabMenu();
+    const host = anchorEl.closest('.note-entry, .sidebar-node');
+    const backdrop = document.createElement('div');
+    backdrop.className = 'kebab-backdrop';
+    backdrop.addEventListener('click', closeKebabMenu);
+
+    const menu = document.createElement('div');
+    menu.className = 'kebab-menu';
+    menu.innerHTML = items.map((item) =>
+      `<button type="button" data-action="${item.id}"${item.danger ? ' class="danger"' : ''}>${escapeHtml(item.label)}</button>`
+    ).join('');
+
+    document.body.appendChild(backdrop);
+    document.body.appendChild(menu);
+
+    const rect = anchorEl.getBoundingClientRect();
+    const menuW = menu.offsetWidth;
+    const menuH = menu.offsetHeight;
+    let left = rect.right - menuW;
+    let top = rect.bottom + 6;
+    left = Math.max(12, Math.min(left, window.innerWidth - menuW - 12));
+    if (top + menuH > window.innerHeight - 12) top = rect.top - menuH - 6;
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+
+    host?.classList.add('menu-open');
+    activeKebabMenu = { backdrop, menu, host };
+
+    menu.addEventListener('click', (e) => {
+      const action = e.target.closest('[data-action]')?.dataset.action;
+      if (!action) return;
+      closeKebabMenu();
+      onAction(action);
+    });
+  }
+
+  function attachKebabButton(btn, items, onAction) {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      showKebabMenu(btn, items, onAction);
+    });
+  }
+
+  function deleteBook(bookId) {
+    if (!confirm('Delete this book and all its notes?')) return;
+    state.notes = state.notes.filter(n => n.bookId !== bookId);
+    state.books = state.books.filter(b => b.id !== bookId);
+    if (state.selectedBookId === bookId) goHome();
+    save();
+    renderAll();
+  }
+
+  function deleteChapter(bookId, chapterId) {
+    if (!confirm('Delete this chapter and its notes?')) return;
+    state.notes = state.notes.filter(n => !(n.bookId === bookId && n.chapterId === chapterId));
+    const book = state.books.find(b => b.id === bookId);
+    if (book) book.chapters = book.chapters.filter(c => c.id !== chapterId);
+    if (state.selectedChapterId === chapterId) state.selectedChapterId = null;
+    save();
+    renderAll();
+  }
+
+  function deleteList(listId) {
+    if (!confirm('Delete this list and all its items?')) return;
+    state.notes = state.notes.filter(n => n.listId !== listId);
+    state.lists = state.lists.filter(l => l.id !== listId);
+    if (state.stickyTodoListId === listId) state.stickyTodoListId = null;
+    if (state.selectedListId === listId) goHome();
+    save();
+    renderAll();
   }
 
   // ============ MODAL ============
@@ -1808,22 +1895,48 @@
 
   function saveNoteFromRoute(route) {
     applyRouteCreations(route);
+
+    if (route.clearTodoMode) {
+      state.stickyTodoListId = null;
+    }
+    if (route.enableStickyTodo && route.destinationListId) {
+      state.stickyTodoListId = route.destinationListId;
+    } else if (route.createListType === 'todo' && route.destinationListId) {
+      state.stickyTodoListId = route.destinationListId;
+    }
+
+    const noteTexts = [];
+    if (route.noteItems?.length) {
+      noteTexts.push(...route.noteItems.map(t => String(t).trim()).filter(Boolean));
+    }
     const noteText = (route.noteText || '').trim();
+    if (noteText && !route.commandOnly) noteTexts.push(noteText);
+
     let toastMsg = '';
 
-    if (noteText && !route.commandOnly) {
-      const note = {
-        id: uid(),
-        bookId: route.destinationListId ? null : (route.destinationBookId || MISC_ID),
-        chapterId: route.destinationListId ? null : (route.destinationChapterId || null),
-        listId: route.destinationListId || null,
-        text: noteText,
-        checked: false,
-        routingConfidence: route.confidence || 'low',
-        createdAt: Date.now(),
-      };
-      state.notes.push(note);
-      toastMsg = 'Saved to ' + getNoteLocation(note);
+    if (noteTexts.length) {
+      const destList = route.destinationListId ? state.lists.find(l => l.id === route.destinationListId) : null;
+      const isTodoDest = destList?.type === 'todo' || route.createListType === 'todo';
+      noteTexts.forEach((text) => {
+        const note = {
+          id: uid(),
+          bookId: route.destinationListId ? null : (route.destinationBookId || MISC_ID),
+          chapterId: route.destinationListId ? null : (route.destinationChapterId || null),
+          listId: route.destinationListId || null,
+          text,
+          checked: false,
+          routingConfidence: route.confidence || 'low',
+          createdAt: Date.now(),
+        };
+        state.notes.push(note);
+      });
+      const lastNote = state.notes[state.notes.length - 1];
+      toastMsg = noteTexts.length > 1
+        ? `Added ${noteTexts.length} items to ${getNoteLocation(lastNote)}`
+        : 'Saved to ' + getNoteLocation(lastNote);
+      if (isTodoDest && route.destinationListId) {
+        state.stickyTodoListId = route.destinationListId;
+      }
     } else if (route.createBookTitle) {
       const chapterCount = route.createChapterTitles?.length || (route.createChapterTitle ? 1 : 0);
       toastMsg = chapterCount
@@ -1835,6 +1948,11 @@
       toastMsg = 'Added chapter: ' + route.createChapterTitle.trim();
     } else if (route.createListTitle) {
       toastMsg = 'Created list: ' + route.createListTitle.trim();
+      if (route.createListType === 'todo' || route.enableStickyTodo) {
+        toastMsg += ' — checkbox mode on';
+      }
+    } else if (route.clearTodoMode) {
+      toastMsg = 'Checkbox mode off';
     } else {
       return;
     }
@@ -1915,6 +2033,7 @@
           defaultChapterId,
           defaultListId,
           routingMode,
+          stickyTodoListId: state.stickyTodoListId,
         }),
       });
       if (!routeRes.ok) throw new Error(await getErrorMessage(routeRes));
@@ -1950,6 +2069,22 @@
     micBarLabel.textContent = 'Hold to talk';
   }
 
+  function releaseMicrophone() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      try { mediaRecorder.stop(); } catch (_) {}
+    }
+    mediaRecorder = null;
+    if (mediaStream) {
+      mediaStream.getTracks().forEach((track) => track.stop());
+      mediaStream = null;
+    }
+    isRecording = false;
+    activeMic = null;
+    if (homeMicBtn) homeMicBtn.classList.remove('recording', 'pop');
+    if (micBtn) micBtn.classList.remove('recording');
+    resetMicButtons();
+  }
+
   async function startRecording(micEl, isHome) {
     if (isRecording || isProcessing) return;
 
@@ -1959,9 +2094,10 @@
     }
 
     try {
-      if (!mediaStream) {
-        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      }
+      releaseMicrophone();
+      mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true },
+      });
 
       activeMic = micEl;
       audioChunks = [];
@@ -1974,6 +2110,7 @@
       };
       mediaRecorder.onstop = () => {
         const blob = new Blob(audioChunks, { type: pendingMimeType });
+        releaseMicrophone();
         processRecording(blob);
       };
 
@@ -1985,6 +2122,7 @@
       showRecordingIndicator(isHome ? 'Listening…' : 'Listening', '…');
     } catch (err) {
       console.error('startRecording:', err);
+      releaseMicrophone();
       alert('Microphone permission denied. Please allow it in your browser settings.');
     }
   }
@@ -2002,6 +2140,7 @@
       if (typeof mediaRecorder.requestData === 'function') mediaRecorder.requestData();
       mediaRecorder.stop();
     } else {
+      releaseMicrophone();
       resetMicButtons();
     }
   }
@@ -2026,6 +2165,14 @@
   bindMic(homeMicBtn, true);
   bindMic(micBtn, false);
 
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') releaseMicrophone();
+  });
+  window.addEventListener('pagehide', releaseMicrophone);
+  window.addEventListener('blur', () => {
+    if (isRecording) stopRecording();
+  });
+
   function initTheme() {
     const saved = localStorage.getItem(THEME_KEY) || 'light';
     setTheme(saved);
@@ -2045,7 +2192,10 @@
 
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.note-entry')) {
-      document.querySelectorAll('.note-entry.expanded').forEach(n => n.classList.remove('expanded'));
+      document.querySelectorAll('.note-entry.selected').forEach(n => n.classList.remove('selected'));
+    }
+    if (!e.target.closest('.kebab-btn') && !e.target.closest('.kebab-menu')) {
+      closeKebabMenu();
     }
   });
 
